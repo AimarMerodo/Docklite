@@ -21,11 +21,19 @@ DockLite permite:
 ## 🧩 Tecnologías utilizadas
 
 | Capa | Tecnología | Descripción |
-|------|-------------|-------------|
-| **Frontend** | AngularJS + Tailwind CSS | Interfaz web moderna y responsive |
-| **Backend** | Node.js + Express | API REST que controla contenedores y lógica de negocio |
-| **Base de datos** | PostgreSQL + Prisma (opcional) | Gestión de datos de usuarios, apps y despliegues |
-| **Infraestructura** | Docker + Docker Compose | Contenerización y orquestación de servicios |
+|------|------------|-------------|
+| **Frontend** | Angular + Tailwind CSS | Interfaz web moderna y responsive |
+| **Backend** | Node.js + Express | API REST |
+| **Base de datos** | PostgreSQL | Persistencia de datos |
+| **Infraestructura** | Docker + Docker Compose | Contenerización |
+
+---
+
+## ✅ Requisitos previos
+
+- Git  
+- Node.js + npm  
+- Docker Desktop (con Docker Compose)
 
 ---
 
@@ -33,140 +41,71 @@ DockLite permite:
 
 ### 1️⃣ Clonar el repositorio
 ```bash
-git clone https://github.com/tuusuario/docklite.git
+git clone https://github.com/AimarMerodo/DockLite.git
 cd docklite
 ```
 
-### 2️⃣ Configurar entorno
-
-Copia el archivo `.env.example` a `.env` y ajusta los valores según tu entorno.
-
-### 3️⃣ Levantar el entorno con Docker Compose
-
-Asegúrate de tener Docker y Docker Compose instalados:
+### 2️⃣ Configurar variables de entorno
 ```bash
-docker compose up --build
+cp .env.example .env
 ```
 
-Esto iniciará:
+### 3️⃣ Instalar dependencias
 
-- **API** en `http://localhost:3000`
-- **Frontend** en `http://localhost:8080`
-- **PostgreSQL** en el puerto `5432`
-
----
-
-## 🧪 Funcionalidades principales
-
-- 🔐 Autenticación de usuarios
-- ⚙️ Gestión de aplicaciones
-- 🚀 Despliegue de contenedores Docker
-- 📜 Logs de ejecución
-- ⏪ Rollback de versiones
-
----
-
-## 🧱 Estructura del repositorio
-```
-docklite/
-├── backend/
-│   ├── Dockerfile
-│   ├── package.json
-│   └── src/
-│
-├── frontend/
-│   ├── Dockerfile
-│   ├── package.json
-│   └── src/
-│
-├── docker-compose.yml
-├── .env.example
-└── README.md
-```
-
----
-
-## 🐳 docker-compose.yml
-```yaml
-version: "3.9"
-
-services:
-  # === Backend ===
-  api:
-    build: ./backend
-    container_name: docklite-api
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - DOCKER_HOST=${DOCKER_HOST}
-    volumes:
-      - ./backend:/app
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - db
-
-  # === Base de datos ===
-  db:
-    image: postgres:16
-    container_name: docklite-db
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-  # === Frontend ===
-  frontend:
-    build: ./frontend
-    container_name: docklite-frontend
-    ports:
-      - "8080:80"
-    depends_on:
-      - api
-
-volumes:
-  pgdata:
-```
-
----
-
-## ⚙️ .env.example
+#### Backend
 ```bash
-# ==== Configuración general ====
-NODE_ENV=development
-PORT=3000
-
-# ==== Base de datos PostgreSQL ====
-POSTGRES_USER=docklite_user
-POSTGRES_PASSWORD=docklite_pass
-POSTGRES_DB=docklite
-DATABASE_URL=postgresql://docklite_user:docklite_pass@db:5432/docklite
-
-# ==== JWT ====
-JWT_SECRET=supersecreto123
-
-# ==== Docker config (si la necesitas en el backend) ====
-DOCKER_HOST=unix:///var/run/docker.sock
+cd backend
+npm install
+cd ..
 ```
+
+#### Frontend
+```bash
+cd frontend
+npm install
+npm run build
+cd ..
+```
+
+---
+
+### 4️⃣ Levantar contenedores
+```bash
+docker compose up -d --build
+```
+---
+## 🔄 Aplicar cambios y redeplegar la aplicación
+
+Para simplificar el mantenimiento del proyecto, se utiliza un **flujo de redepliegue único** que permite aplicar cualquier cambio realizado en el sistema, independientemente de si afecta al código del frontend, backend, variables de entorno o archivos de configuración Docker.
+
+### ♻️ Redepliegue completo (recomendado)
+
+Este procedimiento detiene los contenedores, reconstruye las imágenes sin usar caché y levanta de nuevo todo el entorno:
+
+```bash
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+---
+
+## 🌐 Servicios
+
+- Frontend: http://localhost  
+- Backend: http://localhost:3000  
 
 ---
 
 ## 🧑‍💻 Autor
 
-**Nombre:** [Tu nombre completo]
+**Nombre:** Aimar Merodo
 
 *Proyecto Fin de Grado – Desarrollo de Aplicaciones Web (DAW)*
 
-- **Centro educativo:** [Tu instituto]
-- **Año académico:** 2025
-- **Email:** [tuemail@ejemplo.com]
+- **Centro educativo:** IES Comercio
+- **Año académico:** 2025/2026
+- **Email:** aimarmerodoa@gmail.com
 
 ---
 
