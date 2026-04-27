@@ -46,6 +46,7 @@ public class JwtProvider {
                 .getPayload();
     }
 
+    // obtiene la id de un token JWT
     public Long getUserIdFromToken(String token){
         return Long.parseLong(getClaims(token).getSubject());
     }
