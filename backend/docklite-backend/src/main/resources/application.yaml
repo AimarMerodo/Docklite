@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: docklite-backend
+  datasource:
+    url: jdbc:postgresql://localhost:5432/docklite
+    username: docklite
+    password: docklitetest
+    driver-class-name: org.postgresql.Driver
+
+jwt:
+   secret: unacadenalargadealmenostreintaydosbytesparahmac256
+   expiration: 86400000   # 24h en ms
+   server:
+    port: 8080

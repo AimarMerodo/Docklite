@@ -10,6 +10,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -18,23 +20,23 @@ services:
     networks:
       - docklite-net
 
-  backend:
-    build:
-      context: ./backend
-    container_name: docklite-backend
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      PORT: ${BACKEND_PORT}
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - docklite-net
-    ports:
-      - "${BACKEND_PORT}:${BACKEND_PORT}"
+  # backend:
+  #   build:
+  #     context: ./backend
+  #   container_name: docklite-backend
+  #   restart: unless-stopped
+  #   env_file: .env
+  #   environment:
+  #     PORT: ${BACKEND_PORT}
+  #     DATABASE_URL: ${DATABASE_URL}
+  #     JWT_SECRET: ${JWT_SECRET}
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   networks:
+  #     - docklite-net
+  #   ports:
+  #     - "${BACKEND_PORT}:${BACKEND_PORT}"
 
   frontend:
     build:
@@ -42,8 +44,8 @@ services:
       dockerfile: Dockerfile
     container_name: docklite-frontend
     restart: unless-stopped
-    depends_on:
-      - backend
+    # depends_on:
+    #   - backend
     networks:
       - docklite-net
     ports:
