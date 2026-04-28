@@ -1250,6 +1250,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
 ### docker-compose.yml:
+
 ```yaml
 services:
   db:
@@ -1264,7 +1265,7 @@ services:
       - "5432:5432"
 
   backend:
-    build: .
+    build: docklite-backend
     ports:
       - "8080:8080"
     environment:

@@ -5,12 +5,28 @@ on:
     branches:
       - main
     paths:
-      - 'backend/docklite-backend/**'
+      - 'backend/**'
+  workflow_dispatch:
 
 jobs:
   build:
     name: Build and analyze
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: docklite
+          POSTGRES_USER: docklite
+          POSTGRES_PASSWORD: docklitetest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U docklite -d docklite"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -34,11 +50,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('backend/docklite-backend/pom.xml') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('backend/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
       - name: Build and analyze
-        working-directory: backend/docklite-backend
+        working-directory: backend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
