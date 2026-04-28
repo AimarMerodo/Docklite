@@ -1,0 +1,212 @@
+### ─────────────────────────────────────────────────────────────
+### VALIDACIONES Y CASOS DE ERROR
+###
+### Pre-requisito: tener creados los users "test" (ADMIN) y "userb" (USER).
+### Ejecuta primero los Logins de abajo para capturar tokens.
+### ─────────────────────────────────────────────────────────────
+
+@host = http://localhost:8080
+@apiV1 = {{host}}/api/v1
+
+
+### Login admin → token en {{tokenAdmin}}
+POST {{apiV1}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "123456"
+}
+
+> {%
+client.global.set("tokenAdmin", response.body.token);
+%}
+
+
+### Login user → token en {{tokenUser}}
+POST {{apiV1}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "userb@test.com",
+  "password": "123456"
+}
+
+> {%
+client.global.set("tokenUser", response.body.token);
+%}
+
+
+### ─────────────────────────────────────────────────────────────
+### AUTH — errores
+### ─────────────────────────────────────────────────────────────
+
+
+### 401 — Login con password incorrecta
+POST {{apiV1}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "passwordmal"
+}
+
+
+### 401 — Login con email que no existe (mismo mensaje, no filtramos info)
+POST {{apiV1}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "noexiste@test.com",
+  "password": "123456"
+}
+
+
+### 409 — Register con email ya registrado
+POST {{apiV1}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "otro",
+  "email": "test@test.com",
+  "password": "123456"
+}
+
+
+### 409 — Register con username ya registrado
+POST {{apiV1}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "test",
+  "email": "diferente@test.com",
+  "password": "123456"
+}
+
+
+### 400 — Register con varios campos mal
+POST {{apiV1}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "x",
+  "email": "no-es-email",
+  "password": "12"
+}
+
+
+### 400 — Register con body vacío
+POST {{apiV1}}/auth/register
+Content-Type: application/json
+
+{}
+
+
+### ─────────────────────────────────────────────────────────────
+### USERS — errores
+### ─────────────────────────────────────────────────────────────
+
+
+### 401 — sin token
+GET {{apiV1}}/users/me
+
+
+### 401 — token inválido
+GET {{apiV1}}/users/me
+Authorization: Bearer chorizo-no-valido
+
+
+### 401 — header sin "Bearer "
+GET {{apiV1}}/users/me
+Authorization: {{tokenUser}}
+
+
+### 403 — USER intenta listar todos los users
+GET {{apiV1}}/users
+Authorization: Bearer {{tokenUser}}
+
+
+### ─────────────────────────────────────────────────────────────
+### CONTAINERS — errores
+### ─────────────────────────────────────────────────────────────
+
+
+### 400 — Crear sin imagen (falla validación @NotBlank)
+POST {{apiV1}}/containers
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "name": "sin-imagen",
+  "autoStart": true
+}
+
+
+### 400 — Crear con body totalmente vacío
+POST {{apiV1}}/containers
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{}
+
+
+### 401 — Listar sin token
+GET {{apiV1}}/containers
+
+
+### 500 — Crear con imagen inexistente (Docker no la encuentra)
+POST {{apiV1}}/containers
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "image": "imagen-que-no-existe:99",
+  "autoStat": true
+}
+
+
+### Pre-paso para errores 403: admin crea un container y guardamos su id
+### (después userb intentará tocarlo)
+POST {{apiV1}}/containers
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "image": "nginx:alpine",
+  "name": "admin-protegido",
+  "autoStart": true
+}
+
+> {%
+client.global.set("adminContainerId", response.body.id);
+%}
+
+
+### 403 — userb intenta inspeccionar container de admin
+GET {{apiV1}}/containers/{{adminContainerId}}
+Authorization: Bearer {{tokenUser}}
+
+
+### 403 — userb intenta parar container de admin
+POST {{apiV1}}/containers/{{adminContainerId}}/stop
+Authorization: Bearer {{tokenUser}}
+
+
+### 403 — userb intenta borrar container de admin
+DELETE {{apiV1}}/containers/{{adminContainerId}}
+Authorization: Bearer {{tokenUser}}
+
+
+### 403 — userb intenta ver logs de container de admin
+GET {{apiV1}}/containers/{{adminContainerId}}/logs
+Authorization: Bearer {{tokenUser}}
+
+
+### Limpieza: admin borra el container que creó arriba
+DELETE {{apiV1}}/containers/{{adminContainerId}}
+Authorization: Bearer {{tokenAdmin}}
+
+
+### 500 — Operar sobre container que no existe (Docker lo rechaza)
+GET {{apiV1}}/containers/no-existe-este-id
+Authorization: Bearer {{tokenAdmin}}

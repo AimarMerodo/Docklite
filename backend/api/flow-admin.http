@@ -1,0 +1,109 @@
+### ─────────────────────────────────────────────────────────────
+### FLUJO ADMIN — happy path completo
+###
+### Pre-requisito: el user "test" debe existir y tener role=ADMIN.
+### Si es la primera vez:
+###   1. Ejecutar "Register admin" (más abajo).
+###   2. Promover en BBDD:
+###        UPDATE users SET role = 'ADMIN' WHERE username = 'test';
+###   3. Ejecutar "Login admin" para sacar token con rol ADMIN.
+### ─────────────────────────────────────────────────────────────
+
+@host = http://localhost:8080
+@apiV1 = {{host}}/api/v1
+
+
+### Register admin (solo la primera vez)
+POST {{apiV1}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "test",
+  "email": "test@test.com",
+  "password": "123456"
+}
+
+
+### Login admin → guarda el token
+POST {{apiV1}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "123456"
+}
+
+> {%
+client.global.set("token", response.body.token);
+%}
+
+
+### Ver mi perfil
+GET {{apiV1}}/users/me
+Authorization: Bearer {{token}}
+
+
+### Listar todos los users (privilegio admin)
+GET {{apiV1}}/users
+Authorization: Bearer {{token}}
+
+
+### ─────────────────────────────────────────────────────────────
+### Containers — CRUD completo
+### ─────────────────────────────────────────────────────────────
+
+
+### Listar todos los containers (admin ve todos los del host)
+GET {{apiV1}}/containers
+Authorization: Bearer {{token}}
+
+
+### Listar solo running
+GET {{apiV1}}/containers?all=false
+Authorization: Bearer {{token}}
+
+
+### Crear container → guarda el id
+POST {{apiV1}}/containers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "image": "nginx:alpine",
+  "name": "admin-demo",
+  "autoStart": true
+}
+
+> {%
+client.global.set("containerId", response.body.id);
+%}
+
+
+### Inspect
+GET {{apiV1}}/containers/{{containerId}}
+Authorization: Bearer {{token}}
+
+
+### Logs (últimas 50 líneas)
+GET {{apiV1}}/containers/{{containerId}}/logs?tail=50
+Authorization: Bearer {{token}}
+
+
+### Stop
+POST {{apiV1}}/containers/{{containerId}}/stop
+Authorization: Bearer {{token}}
+
+
+### Start
+POST {{apiV1}}/containers/{{containerId}}/start
+Authorization: Bearer {{token}}
+
+
+### Restart
+POST {{apiV1}}/containers/{{containerId}}/restart
+Authorization: Bearer {{token}}
+
+
+### Borrar container (limpia ownership en BBDD)
+DELETE {{apiV1}}/containers/{{containerId}}
+Authorization: Bearer {{token}}

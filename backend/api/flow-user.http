@@ -1,0 +1,99 @@
+### ─────────────────────────────────────────────────────────────
+### FLUJO USER NORMAL — happy path
+###
+### Un user con rol USER (sin privilegios admin):
+###   - Solo ve sus propios containers.
+###   - Puede crear containers nuevos.
+###   - Puede gestionar (start/stop/...) los suyos.
+###   - NO puede listar usuarios.
+###   - NO puede tocar containers de otros users.
+### ─────────────────────────────────────────────────────────────
+
+@host = http://localhost:8080
+@apiV1 = {{host}}/api/v1
+
+
+### Register user normal (solo la primera vez)
+POST {{apiV1}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "TestingFlow",
+  "email": "testingflow@test.com",
+  "password": "123456"
+}
+
+
+### Login → guarda el token
+POST {{apiV1}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "userb@test.com",
+  "password": "123456"
+}
+
+> {%
+client.global.set("token", response.body.token);
+%}
+
+
+### Ver mi perfil
+GET {{apiV1}}/users/me
+Authorization: Bearer {{token}}
+
+
+### Listar mis containers (al principio: vacío)
+GET {{apiV1}}/containers
+Authorization: Bearer {{token}}
+
+
+### Crear mi propio container → guarda el id
+POST {{apiV1}}/containers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "image": "nginx:alpine",
+  "name": "user-demo",
+  "autoStart": true
+}
+
+> {%
+client.global.set("containerId", response.body.id);
+%}
+
+
+### Listar otra vez (ahora aparece el mío)
+GET {{apiV1}}/containers
+Authorization: Bearer {{token}}
+
+
+### Inspect del mío
+GET {{apiV1}}/containers/e14101366d80979d82d644dd0275ee7bc39b572e2f0611a20a09781a71615240
+Authorization: Bearer {{token}}
+
+
+### Logs del mío
+GET {{apiV1}}/containers/{{containerId}}/logs?tail=20
+Authorization: Bearer {{token}}
+
+
+### Stop el mío
+POST {{apiV1}}/containers/e14101366d80979d82d644dd0275ee7bc39b572e2f0611a20a09781a71615240/stop
+Authorization: Bearer {{token}}
+
+
+### Start el mío
+POST {{apiV1}}/containers/e14101366d80979d82d644dd0275ee7bc39b572e2f0611a20a09781a71615240/start
+Authorization: Bearer {{token}}
+
+
+### Restart el mío
+POST {{apiV1}}/containers/{{containerId}}/restart
+Authorization: Bearer {{token}}
+
+
+### Borrar el mío
+DELETE {{apiV1}}/containers/e14101366d80979d82d644dd0275ee7bc39b572e2f0611a20a09781a71615240
+Authorization: Bearer {{token}}
