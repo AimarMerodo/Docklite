@@ -10,5 +10,6 @@ spring:
 jwt:
    secret: unacadenalargadealmenostreintaydosbytesparahmac256
    expiration: 86400000   # 24h en ms
-   server:
-port: 8080
+
+server:
+   port: 8080
