@@ -13,3 +13,13 @@ jwt:
 
 server:
    port: 8080
+
+app:
+  public-url: ${APP_PUBLIC_URL:http://localhost:4200}
+  admin:
+    username: ${ADMIN_USERNAME:}
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+  invitation:
+    default-max-uses: 1
+    default-expires-in-days: 7

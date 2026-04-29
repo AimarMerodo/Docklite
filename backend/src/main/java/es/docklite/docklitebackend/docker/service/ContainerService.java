@@ -3,6 +3,8 @@ package es.docklite.docklitebackend.docker.service;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import es.docklite.docklitebackend.audit.entity.ActivityAction;
@@ -43,6 +45,8 @@ public class ContainerService {
     }
 
     public ContainerDto create(CreateContainerRequest req, User currentUser) {
+        ensureImageAvailable(req.image(), currentUser);
+
         var cmd = dockerClient.createContainerCmd(req.image());
         if (req.name() != null && !req.name().isBlank()) {
             cmd = cmd.withName(req.name());
@@ -119,6 +123,37 @@ public class ContainerService {
 
     private String resolveFullId(String id) {
         return dockerClient.inspectContainerCmd(id).exec().getId();
+    }
+
+    /** Si la imagen no está en local, la descarga (pull-on-create). */
+    private void ensureImageAvailable(String imageRef, User currentUser) {
+        try {
+            dockerClient.inspectImageCmd(imageRef).exec();
+        } catch (NotFoundException notLocal) {
+            String repo = imageRef;
+            String tag = "latest";
+            int colon = imageRef.lastIndexOf(':');
+            if (colon > 0 && imageRef.indexOf('/', colon) == -1) {
+                repo = imageRef.substring(0, colon);
+                tag = imageRef.substring(colon + 1);
+            }
+            try {
+                dockerClient.pullImageCmd(repo)
+                        .withTag(tag)
+                        .exec(new PullImageResultCallback())
+                        .awaitCompletion();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Pull interrupted", e);
+            }
+            String pulledId = dockerClient.inspectImageCmd(repo + ":" + tag).exec().getId();
+            try {
+                ownershipService.register(pulledId, ResourceType.IMAGE, repo + ":" + tag, currentUser.getId());
+            } catch (org.springframework.dao.DataIntegrityViolationException ignored) {
+                // ya estaba registrada para este user
+            }
+            activityLogService.log(currentUser.getId(), pulledId, ResourceType.IMAGE, ActivityAction.PULL);
+        }
     }
 
     private void checkAccess(String containerId, User user) {

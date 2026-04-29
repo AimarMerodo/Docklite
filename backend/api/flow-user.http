@@ -1,41 +1,67 @@
 ### ─────────────────────────────────────────────────────────────
-### FLUJO USER NORMAL — happy path
+### FLUJO USER NORMAL — registro vía invitación
 ###
-### Un user con rol USER (sin privilegios admin):
-###   - Solo ve sus propios containers.
-###   - Puede crear containers nuevos.
-###   - Puede gestionar (start/stop/...) los suyos.
-###   - NO puede listar usuarios.
-###   - NO puede tocar containers de otros users.
+### Como ya no existe registro abierto, el flujo arranca con
+### el admin creando un link y el usuario aceptándolo.
+###
+### Pre-requisito: el admin debe estar logueado para crear la invitación.
 ### ─────────────────────────────────────────────────────────────
 
 @host = http://localhost:8080
 @apiV1 = {{host}}/api/v1
 
 
-### Register user normal (solo la primera vez)
-POST {{apiV1}}/auth/register
-Content-Type: application/json
-
-{
-  "username": "TestingFlow",
-  "email": "testingflow@test.com",
-  "password": "123456"
-}
-
-
-### Login → guarda el token
+### Paso 1 — Login como admin para poder crear invitación
 POST {{apiV1}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "userb@test.com",
-  "password": "123456"
+  "email": "admin@docklite.local",
+  "password": "admin1234"
+}
+
+> {%
+client.global.set("adminToken", response.body.token);
+%}
+
+
+### Paso 2 — Admin crea una invitación de 1 uso (7 días)
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "maxUses": 1,
+  "expiresInDays": 7
+}
+
+> {%
+client.global.set("invitationToken", response.body.token);
+%}
+
+
+### Paso 3 — Validar invitación (público, sin auth)
+GET {{apiV1}}/invitations/{{invitationToken}}
+
+
+### Paso 4 — Aceptar invitación → crea user + auto-login
+POST {{apiV1}}/invitations/{{invitationToken}}/accept
+Content-Type: application/json
+
+{
+  "username": "rafa",
+  "email": "rafa@test.com",
+  "password": "rafa1234"
 }
 
 > {%
 client.global.set("token", response.body.token);
 %}
+
+
+### ─────────────────────────────────────────────────────────────
+### A partir de aquí, el user creado ya tiene token JWT
+### ─────────────────────────────────────────────────────────────
 
 
 ### Ver mi perfil
@@ -55,7 +81,7 @@ Content-Type: application/json
 
 {
   "image": "nginx:alpine",
-  "name": "user-demo",
+  "name": "rafa-demo",
   "autoStart": true
 }
 
@@ -70,7 +96,7 @@ Authorization: Bearer {{token}}
 
 
 ### Inspect del mío
-GET {{apiV1}}/containers/e14101366d80979d82d644dd0275ee7bc39b572e2f0611a20a09781a71615240
+GET {{apiV1}}/containers/{{containerId}}
 Authorization: Bearer {{token}}
 
 
@@ -80,12 +106,12 @@ Authorization: Bearer {{token}}
 
 
 ### Stop el mío
-POST {{apiV1}}/containers/e14101366d80979d82d644dd0275ee7bc39b572e2f0611a20a09781a71615240/stop
+POST {{apiV1}}/containers/{{containerId}}/stop
 Authorization: Bearer {{token}}
 
 
 ### Start el mío
-POST {{apiV1}}/containers/e14101366d80979d82d644dd0275ee7bc39b572e2f0611a20a09781a71615240/start
+POST {{apiV1}}/containers/{{containerId}}/start
 Authorization: Bearer {{token}}
 
 
@@ -95,5 +121,25 @@ Authorization: Bearer {{token}}
 
 
 ### Borrar el mío
-DELETE {{apiV1}}/containers/e14101366d80979d82d644dd0275ee7bc39b572e2f0611a20a09781a71615240
+DELETE {{apiV1}}/containers/{{containerId}}
 Authorization: Bearer {{token}}
+
+
+### ─────────────────────────────────────────────────────────────
+### Pruebas de cosas que un USER NO puede hacer
+### ─────────────────────────────────────────────────────────────
+
+
+### Listar todos los users (esperado 403)
+GET {{apiV1}}/users
+Authorization: Bearer {{token}}
+
+
+### Crear invitación como user (esperado 403)
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "maxUses": 1
+}

@@ -21,7 +21,7 @@ public class ActivityLog {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "resource_id", length = 64)
+    @Column(name = "resource_id", length = 128)
     private String resourceId;
 
     @Enumerated(EnumType.STRING)

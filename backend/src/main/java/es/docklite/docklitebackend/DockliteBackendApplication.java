@@ -9,5 +9,4 @@ public class DockliteBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(DockliteBackendApplication.class, args);
     }
-
 }

@@ -1,36 +1,25 @@
 ### ─────────────────────────────────────────────────────────────
-### FLUJO ADMIN — happy path completo
+### FLUJO ADMIN — happy path completo (modelo invitation-only)
 ###
-### Pre-requisito: el user "test" debe existir y tener role=ADMIN.
-### Si es la primera vez:
-###   1. Ejecutar "Register admin" (más abajo).
-###   2. Promover en BBDD:
-###        UPDATE users SET role = 'ADMIN' WHERE username = 'test';
-###   3. Ejecutar "Login admin" para sacar token con rol ADMIN.
+### Pre-requisito: el backend debe haber arrancado con las env vars
+### ADMIN_USERNAME, ADMIN_EMAIL, ADMIN_PASSWORD configuradas en el .env.
+### El bootstrap crea automáticamente el primer admin al arrancar.
+###
+### Credenciales por defecto del .env:
+###   admin@docklite.local / admin1234
 ### ─────────────────────────────────────────────────────────────
 
 @host = http://localhost:8080
 @apiV1 = {{host}}/api/v1
 
 
-### Register admin (solo la primera vez)
-POST {{apiV1}}/auth/register
-Content-Type: application/json
-
-{
-  "username": "test",
-  "email": "test@test.com",
-  "password": "123456"
-}
-
-
-### Login admin → guarda el token
+### Login admin → guarda token
 POST {{apiV1}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
-  "password": "123456"
+  "email": "admin@docklite.local",
+  "password": "admin1234"
 }
 
 > {%
@@ -48,12 +37,87 @@ GET {{apiV1}}/users
 Authorization: Bearer {{token}}
 
 
+### Cambiar mi password (después restaurar manualmente si quieres)
+PUT {{apiV1}}/users/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "admin1234",
+  "newPassword": "admin1234"
+}
+
+
 ### ─────────────────────────────────────────────────────────────
-### Containers — CRUD completo
+### Invitations — gestión de links para crear users
 ### ─────────────────────────────────────────────────────────────
 
 
-### Listar todos los containers (admin ve todos los del host)
+### Crear invitación (3 usos, 7 días) → guarda token + url
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "maxUses": 3,
+  "expiresInDays": 7
+}
+
+> {%
+client.global.set("invitationToken", response.body.token);
+client.global.set("invitationId", response.body.id);
+%}
+
+
+### Crear invitación con defaults (1 uso, 7 días)
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+
+### Listar todas las invitaciones (con flags active/expired/exhausted)
+GET {{apiV1}}/admin/invitations
+Authorization: Bearer {{token}}
+
+
+### Cancelar la invitación creada
+DELETE {{apiV1}}/admin/invitations/{{invitationId}}
+Authorization: Bearer {{token}}
+
+
+### ─────────────────────────────────────────────────────────────
+### System / Dashboard
+### ─────────────────────────────────────────────────────────────
+
+
+### Info del Docker daemon
+GET {{apiV1}}/system/info
+Authorization: Bearer {{token}}
+
+
+### Versión del Docker Engine
+GET {{apiV1}}/system/version
+Authorization: Bearer {{token}}
+
+
+### Dashboard (resumen agregado: containers/images/networks/volumes)
+GET {{apiV1}}/system/dashboard
+Authorization: Bearer {{token}}
+
+
+### Activity log paginado (admin ve todo, user solo lo suyo)
+GET {{apiV1}}/activity?page=0&size=20
+Authorization: Bearer {{token}}
+
+
+### ─────────────────────────────────────────────────────────────
+### Containers
+### ─────────────────────────────────────────────────────────────
+
+
+### Listar containers (admin ve todos los del host)
 GET {{apiV1}}/containers
 Authorization: Bearer {{token}}
 
@@ -63,7 +127,7 @@ GET {{apiV1}}/containers?all=false
 Authorization: Bearer {{token}}
 
 
-### Crear container → guarda el id
+### Crear container → guarda id (auto-pull si la imagen no es local)
 POST {{apiV1}}/containers
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -79,7 +143,7 @@ client.global.set("containerId", response.body.id);
 %}
 
 
-### Inspect
+### Inspect container
 GET {{apiV1}}/containers/{{containerId}}
 Authorization: Bearer {{token}}
 
@@ -104,6 +168,107 @@ POST {{apiV1}}/containers/{{containerId}}/restart
 Authorization: Bearer {{token}}
 
 
-### Borrar container (limpia ownership en BBDD)
+### Borrar container
 DELETE {{apiV1}}/containers/{{containerId}}
+Authorization: Bearer {{token}}
+
+
+### ─────────────────────────────────────────────────────────────
+### Images
+### ─────────────────────────────────────────────────────────────
+
+
+### Listar imágenes
+GET {{apiV1}}/images
+Authorization: Bearer {{token}}
+
+
+### Buscar en Docker Hub
+GET {{apiV1}}/images/search?q=alpine
+Authorization: Bearer {{token}}
+
+
+### Pull explícito
+POST {{apiV1}}/images/pull
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "image": "busybox",
+  "tag": "latest"
+}
+
+
+### Inspect imagen
+GET {{apiV1}}/images/busybox:latest
+Authorization: Bearer {{token}}
+
+
+### Borrar imagen (solo admin)
+DELETE {{apiV1}}/images/busybox:latest
+Authorization: Bearer {{token}}
+
+
+### ─────────────────────────────────────────────────────────────
+### Networks
+### ─────────────────────────────────────────────────────────────
+
+
+### Listar redes
+GET {{apiV1}}/networks
+Authorization: Bearer {{token}}
+
+
+### Crear red → guarda id
+POST {{apiV1}}/networks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "admin-net",
+  "driver": "bridge"
+}
+
+> {%
+client.global.set("networkId", response.body.id);
+%}
+
+
+### Inspect red
+GET {{apiV1}}/networks/{{networkId}}
+Authorization: Bearer {{token}}
+
+
+### Borrar red
+DELETE {{apiV1}}/networks/{{networkId}}
+Authorization: Bearer {{token}}
+
+
+### ─────────────────────────────────────────────────────────────
+### Volumes
+### ─────────────────────────────────────────────────────────────
+
+
+### Listar volúmenes
+GET {{apiV1}}/volumes
+Authorization: Bearer {{token}}
+
+
+### Crear volumen
+POST {{apiV1}}/volumes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "admin-vol"
+}
+
+
+### Inspect volumen
+GET {{apiV1}}/volumes/admin-vol
+Authorization: Bearer {{token}}
+
+
+### Borrar volumen
+DELETE {{apiV1}}/volumes/admin-vol
 Authorization: Bearer {{token}}

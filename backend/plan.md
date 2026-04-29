@@ -863,6 +863,12 @@ public class ContainerController {
 
 > Cubre: RF-07 (volúmenes), RF-08 (redes) + imágenes
 
+### 📋 TODOs identificados (descubiertos en Fase 2)
+
+- [x] **Pull automático al crear container** — implementada **opción (C)**: existe `POST /api/v1/images/pull` para pulls explícitos y además `ContainerService.create` hace fallback automático (`ensureImageAvailable`) si la imagen no existe en local.
+- [x] **Mejorar manejo de `NotFoundException` de docker-java** — añadido handler específico en `GlobalExceptionHandler` que devuelve 404 con mensaje "Docker resource not found".
+- [ ] **Validar formato de la imagen antes del pull** — si el usuario manda `image: ""` o un nombre malformado el error es críptico. Validar pattern básico (`<repo>[:<tag>]`).
+
 ### Día 1-2: ImageService + ImageController
 
 ```java

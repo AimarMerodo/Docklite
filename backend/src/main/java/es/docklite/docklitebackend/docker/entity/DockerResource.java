@@ -24,7 +24,7 @@ public class DockerResource {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "resource_id", nullable = false, length = 64)
+    @Column(name = "resource_id", nullable = false, length = 128)
     private String resourceId;
 
     @Enumerated(EnumType.STRING)

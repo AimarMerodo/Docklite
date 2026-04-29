@@ -6,5 +6,7 @@ public enum ActivityAction {
     STOP,
     RESTART,
     DELETE,
-    PULL
+    PULL,
+    CONNECT,
+    DISCONNECT
 }

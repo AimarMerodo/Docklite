@@ -1,8 +1,8 @@
 ### ─────────────────────────────────────────────────────────────
 ### VALIDACIONES Y CASOS DE ERROR
 ###
-### Pre-requisito: tener creados los users "test" (ADMIN) y "userb" (USER).
-### Ejecuta primero los Logins de abajo para capturar tokens.
+### Pre-requisito: existe un admin (admin@docklite.local) y al menos
+### un user con role USER. Ejecuta primero los Logins para tokens.
 ### ─────────────────────────────────────────────────────────────
 
 @host = http://localhost:8080
@@ -14,8 +14,8 @@ POST {{apiV1}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
-  "password": "123456"
+  "email": "admin@docklite.local",
+  "password": "admin1234"
 }
 
 > {%
@@ -24,12 +24,13 @@ client.global.set("tokenAdmin", response.body.token);
 
 
 ### Login user → token en {{tokenUser}}
+### Ajusta el email/password al de un user real (ej. uno creado vía invitation)
 POST {{apiV1}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "userb@test.com",
-  "password": "123456"
+  "email": "rafa@test.com",
+  "password": "rafa1234"
 }
 
 > {%
@@ -47,7 +48,7 @@ POST {{apiV1}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
+  "email": "admin@docklite.local",
   "password": "passwordmal"
 }
 
@@ -62,30 +63,168 @@ Content-Type: application/json
 }
 
 
-### 409 — Register con email ya registrado
+### 404 — POST /auth/register ya no existe (modelo invitation-only)
 POST {{apiV1}}/auth/register
 Content-Type: application/json
 
 {
-  "username": "otro",
-  "email": "test@test.com",
+  "username": "x",
+  "email": "x@x.com",
   "password": "123456"
 }
 
 
-### 409 — Register con username ya registrado
-POST {{apiV1}}/auth/register
+### ─────────────────────────────────────────────────────────────
+### INVITATIONS — errores
+### ─────────────────────────────────────────────────────────────
+
+
+### 404 — Validar token inexistente
+GET {{apiV1}}/invitations/no-existe-este-token
+
+
+### 404 — Aceptar token inexistente
+POST {{apiV1}}/invitations/no-existe/accept
 Content-Type: application/json
 
 {
-  "username": "test",
-  "email": "diferente@test.com",
+  "username": "x",
+  "email": "x@x.com",
   "password": "123456"
 }
 
 
-### 400 — Register con varios campos mal
-POST {{apiV1}}/auth/register
+### 403 — USER intenta crear invitación
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{tokenUser}}
+Content-Type: application/json
+
+{
+  "maxUses": 1
+}
+
+
+### 401 — Crear invitación sin token
+POST {{apiV1}}/admin/invitations
+Content-Type: application/json
+
+{
+  "maxUses": 1
+}
+
+
+### Pre-paso: admin crea invitación, después la cancela y luego se intenta usar
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "maxUses": 1
+}
+
+> {%
+client.global.set("cancelTestToken", response.body.token);
+client.global.set("cancelTestId", response.body.id);
+%}
+
+
+### Cancelar la invitación recién creada
+DELETE {{apiV1}}/admin/invitations/{{cancelTestId}}
+Authorization: Bearer {{tokenAdmin}}
+
+
+### 404 — Validar invitación cancelada
+GET {{apiV1}}/invitations/{{cancelTestToken}}
+
+
+### 404 — Aceptar invitación cancelada
+POST {{apiV1}}/invitations/{{cancelTestToken}}/accept
+Content-Type: application/json
+
+{
+  "username": "tarde",
+  "email": "tarde@test.com",
+  "password": "123456"
+}
+
+
+### Pre-paso: agotar invitación
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "maxUses": 1
+}
+
+> {%
+client.global.set("usedToken", response.body.token);
+%}
+
+
+### Acepta una vez (consume el único uso) — guarda email distinto cada vez
+POST {{apiV1}}/invitations/{{usedToken}}/accept
+Content-Type: application/json
+
+{
+  "username": "victima1",
+  "email": "victima1@test.com",
+  "password": "123456"
+}
+
+
+### 404 — Aceptar otra vez (ya está agotada)
+POST {{apiV1}}/invitations/{{usedToken}}/accept
+Content-Type: application/json
+
+{
+  "username": "victima2",
+  "email": "victima2@test.com",
+  "password": "123456"
+}
+
+
+### 409 — Aceptar con email duplicado
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "maxUses": 1
+}
+
+> {%
+client.global.set("dupToken", response.body.token);
+%}
+
+
+### 409 — Mismo email ya existe
+POST {{apiV1}}/invitations/{{dupToken}}/accept
+Content-Type: application/json
+
+{
+  "username": "otroAdmin",
+  "email": "admin@docklite.local",
+  "password": "123456"
+}
+
+
+### 400 — Validaciones (username corto, email mal, password corta)
+POST {{apiV1}}/admin/invitations
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "maxUses": 1
+}
+
+> {%
+client.global.set("validationToken", response.body.token);
+%}
+
+
+### Validation failed con campos detallados
+POST {{apiV1}}/invitations/{{validationToken}}/accept
 Content-Type: application/json
 
 {
@@ -93,13 +232,6 @@ Content-Type: application/json
   "email": "no-es-email",
   "password": "12"
 }
-
-
-### 400 — Register con body vacío
-POST {{apiV1}}/auth/register
-Content-Type: application/json
-
-{}
 
 
 ### ─────────────────────────────────────────────────────────────
@@ -124,6 +256,17 @@ Authorization: {{tokenUser}}
 ### 403 — USER intenta listar todos los users
 GET {{apiV1}}/users
 Authorization: Bearer {{tokenUser}}
+
+
+### 401 — PUT /me con password actual incorrecta
+PUT {{apiV1}}/users/me
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "currentPassword": "passwordmal",
+  "newPassword": "nuevapass1"
+}
 
 
 ### ─────────────────────────────────────────────────────────────
@@ -154,19 +297,12 @@ Content-Type: application/json
 GET {{apiV1}}/containers
 
 
-### 500 — Crear con imagen inexistente (Docker no la encuentra)
-POST {{apiV1}}/containers
+### 404 — Inspect container inexistente
+GET {{apiV1}}/containers/no-existe-este-id
 Authorization: Bearer {{tokenAdmin}}
-Content-Type: application/json
-
-{
-  "image": "imagen-que-no-existe:99",
-  "autoStat": true
-}
 
 
-### Pre-paso para errores 403: admin crea un container y guardamos su id
-### (después userb intentará tocarlo)
+### Pre-paso para 403 cross-user: admin crea container
 POST {{apiV1}}/containers
 Authorization: Bearer {{tokenAdmin}}
 Content-Type: application/json
@@ -207,6 +343,27 @@ DELETE {{apiV1}}/containers/{{adminContainerId}}
 Authorization: Bearer {{tokenAdmin}}
 
 
-### 500 — Operar sobre container que no existe (Docker lo rechaza)
-GET {{apiV1}}/containers/no-existe-este-id
+### ─────────────────────────────────────────────────────────────
+### IMAGES — errores
+### ─────────────────────────────────────────────────────────────
+
+
+### 403 — USER intenta borrar imagen (solo admin)
+DELETE {{apiV1}}/images/nginx:alpine
+Authorization: Bearer {{tokenUser}}
+
+
+### ─────────────────────────────────────────────────────────────
+### NETWORKS — errores
+### ─────────────────────────────────────────────────────────────
+
+
+### 400 — Borrar red default (bridge)
+### Primero hay que sacar el id de bridge
+GET {{apiV1}}/networks
 Authorization: Bearer {{tokenAdmin}}
+
+
+### 400 — Borrar bridge (sustituye <BRIDGE_ID> por el id real)
+# DELETE {{apiV1}}/networks/<BRIDGE_ID>
+# Authorization: Bearer {{tokenAdmin}}
