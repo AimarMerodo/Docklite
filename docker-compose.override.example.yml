@@ -1,0 +1,15 @@
+# ──────────────────────────────────────────────────────────────
+# Local development overlay — NOT for production.
+#
+# Copy this file to "docker-compose.override.yml" (gitignored) and
+# Compose will merge it automatically with docker-compose.yml when
+# you run `docker compose up`.
+#
+# What it does: republishes the database to the host so IntelliJ
+# (or any local Spring Boot run) can reach Postgres at localhost:5432.
+# ──────────────────────────────────────────────────────────────
+
+services:
+  db:
+    ports:
+      - "5432:5432"

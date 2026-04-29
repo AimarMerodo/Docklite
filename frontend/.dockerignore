@@ -1,0 +1,17 @@
+# Build / install output
+node_modules/
+dist/
+.angular/
+
+# Tests / coverage
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Misc
+.gitignore
+.editorconfig
+README.md

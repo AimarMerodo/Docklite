@@ -1,0 +1,19 @@
+# Build output
+target/
+
+# IDE / tooling
+.idea/
+.vscode/
+.claude/
+.claude-flow/
+*.iml
+
+# Local-only files
+.env
+.env.local
+api/
+*.http
+
+# Docs / misc
+HELP.md
+.gitignore

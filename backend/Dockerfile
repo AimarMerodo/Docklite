@@ -1,27 +1,30 @@
 # ──────────────────────────────────────────────────────────────
-# Stage 1 — Build the Angular app
+# Stage 1 — Build the JAR with Maven
 # ──────────────────────────────────────────────────────────────
-FROM node:20-alpine AS build
+FROM maven:3.9-eclipse-temurin-21 AS builder
+
+WORKDIR /build
+
+# Copy pom first and prefetch deps. This layer is cached as long as
+# pom.xml doesn't change → fast rebuilds when only source changes.
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Now copy the source and build the jar (skip tests; they run in CI).
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+
+
+# ──────────────────────────────────────────────────────────────
+# Stage 2 — Runtime image (JRE only, much smaller)
+# ──────────────────────────────────────────────────────────────
+FROM eclipse-temurin:21-jre-alpine
+
 WORKDIR /app
 
-# Use the lockfile for reproducible installs (npm ci > npm install).
-COPY package*.json ./
-RUN npm ci
+# Copy the fat jar produced by the builder stage.
+COPY --from=builder /build/target/*.jar app.jar
 
-COPY . .
-RUN npm run build
+EXPOSE 8080
 
-
-# ──────────────────────────────────────────────────────────────
-# Stage 2 — Serve with nginx
-# ──────────────────────────────────────────────────────────────
-FROM nginx:alpine
-
-# HTTP-only config baked in by default. The compose stack overrides this
-# with an SSL template when a custom domain is configured.
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-
-# Angular 21 outputs to dist/<projectName>/browser/
-COPY --from=build /app/dist/frontend/browser/ /usr/share/nginx/html/
-
-EXPOSE 80
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

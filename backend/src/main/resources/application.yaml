@@ -2,13 +2,13 @@ spring:
   application:
     name: docklite-backend
   datasource:
-    url: jdbc:postgresql://localhost:5432/docklite
-    username: docklite
-    password: docklitetest
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/docklite}
+    username: ${SPRING_DATASOURCE_USERNAME:docklite}
+    password: ${SPRING_DATASOURCE_PASSWORD:docklitetest}
     driver-class-name: org.postgresql.Driver
 
 jwt:
-   secret: unacadenalargadealmenostreintaydosbytesparahmac256
+   secret: ${JWT_SECRET:unacadenalargadealmenostreintaydosbytesparahmac256}
    expiration: 86400000   # 24h en ms
 
 server:
@@ -23,3 +23,5 @@ app:
   invitation:
     default-max-uses: 1
     default-expires-in-days: 7
+  docker:
+    host: ${DOCKER_HOST:unix:///var/run/docker.sock}

@@ -1246,6 +1246,16 @@ GET /api/activity?page=0&size=20 → Log de actividad paginado
 - [ ] README.md
 - [ ] Preparar defensa
 
+### ⚠️ Notas de seguridad para el README
+
+- **Backend tiene acceso total a Docker.** El backend monta `/var/run/docker.sock` →
+  control total del host. RCE en el backend = root del servidor. Aceptable para
+  self-hosted entre conocidos; mitigación futura: socket-proxy de Tecnativa.
+- **Bootstrap admin pwd** debe cambiarse en el primer login si fue auto-generada
+  por el script (mostrar advertencia).
+- **JWT_SECRET y POSTGRES_PASSWORD** se generan aleatorios por el install.sh.
+  No deben commitearse (`.env` en `.gitignore`).
+
 ### Dockerfile:
 ```dockerfile
 FROM eclipse-temurin:21-jre-alpine
