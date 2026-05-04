@@ -8,6 +8,8 @@ class DockliteBackendApplicationTests {
 
     @Test
     void contextLoads() {
+        // Smoke test: @SpringBootTest already verifies that the application
+        // context starts without errors. No assertions are needed here.
     }
 
 }
