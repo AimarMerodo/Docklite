@@ -5,6 +5,7 @@ import com.github.dockerjava.api.command.InspectVolumeResponse;
 import com.github.dockerjava.api.DockerClient;
 import es.docklite.docklitebackend.audit.entity.ActivityAction;
 import es.docklite.docklitebackend.audit.service.ActivityLogService;
+import es.docklite.docklitebackend.common.exception.SecurityMessages;
 import es.docklite.docklitebackend.docker.dto.CreateVolumeRequest;
 import es.docklite.docklitebackend.docker.dto.VolumeDto;
 import es.docklite.docklitebackend.docker.entity.ResourceType;
@@ -64,7 +65,7 @@ public class VolumeService {
 
     private void checkAccess(String volumeName, User user) {
         if (!ownershipService.hasAccess(volumeName, ResourceType.VOLUME, user)) {
-            throw new AccessDeniedException("Access denied");
+            throw new AccessDeniedException(SecurityMessages.ACCESS_DENIED);
         }
     }
 }

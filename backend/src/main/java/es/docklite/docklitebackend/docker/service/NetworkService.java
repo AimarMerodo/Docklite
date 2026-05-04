@@ -5,6 +5,7 @@ import com.github.dockerjava.api.command.CreateNetworkResponse;
 import com.github.dockerjava.api.model.Network;
 import es.docklite.docklitebackend.audit.entity.ActivityAction;
 import es.docklite.docklitebackend.audit.service.ActivityLogService;
+import es.docklite.docklitebackend.common.exception.SecurityMessages;
 import es.docklite.docklitebackend.docker.dto.CreateNetworkRequest;
 import es.docklite.docklitebackend.docker.dto.NetworkDto;
 import es.docklite.docklitebackend.docker.entity.ResourceType;
@@ -78,7 +79,7 @@ public class NetworkService {
         }
         String fullContainerId = dockerClient.inspectContainerCmd(containerId).exec().getId();
         if (!ownershipService.hasAccess(fullContainerId, ResourceType.CONTAINER, currentUser)) {
-            throw new AccessDeniedException("Access denied");
+            throw new AccessDeniedException(SecurityMessages.ACCESS_DENIED);
         }
         dockerClient.connectToNetworkCmd()
                 .withNetworkId(info.getId())
@@ -94,7 +95,7 @@ public class NetworkService {
         }
         String fullContainerId = dockerClient.inspectContainerCmd(containerId).exec().getId();
         if (!ownershipService.hasAccess(fullContainerId, ResourceType.CONTAINER, currentUser)) {
-            throw new AccessDeniedException("Access denied");
+            throw new AccessDeniedException(SecurityMessages.ACCESS_DENIED);
         }
         dockerClient.disconnectFromNetworkCmd()
                 .withNetworkId(info.getId())
@@ -109,7 +110,7 @@ public class NetworkService {
 
     private void checkAccess(String networkId, User user) {
         if (!ownershipService.hasAccess(networkId, ResourceType.NETWORK, user)) {
-            throw new AccessDeniedException("Access denied");
+            throw new AccessDeniedException(SecurityMessages.ACCESS_DENIED);
         }
     }
 }

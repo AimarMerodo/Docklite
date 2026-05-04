@@ -10,6 +10,7 @@ import com.github.dockerjava.api.model.Frame;
 import es.docklite.docklitebackend.audit.entity.ActivityAction;
 import es.docklite.docklitebackend.audit.service.ActivityLogService;
 import es.docklite.docklitebackend.common.exception.DockerOperationException;
+import es.docklite.docklitebackend.common.exception.SecurityMessages;
 import es.docklite.docklitebackend.docker.dto.ContainerDto;
 import es.docklite.docklitebackend.docker.dto.CreateContainerRequest;
 import es.docklite.docklitebackend.docker.entity.ResourceType;
@@ -159,7 +160,7 @@ public class ContainerService {
 
     private void checkAccess(String containerId, User user) {
         if (!ownershipService.hasAccess(containerId, ResourceType.CONTAINER, user)) {
-            throw new AccessDeniedException("Access denied");
+            throw new AccessDeniedException(SecurityMessages.ACCESS_DENIED);
         }
     }
 }
