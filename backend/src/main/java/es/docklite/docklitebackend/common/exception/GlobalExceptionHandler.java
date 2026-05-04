@@ -67,6 +67,14 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(HttpStatus.NOT_FOUND, ex.getMessage()));
     }
 
+    @ExceptionHandler(DockerOperationException.class)
+    public ResponseEntity<ErrorResponse> handleDockerOperation(DockerOperationException ex) {
+        log.error("Docker operation failed", ex);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "Docker operation failed"));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException ex) {
         return ResponseEntity

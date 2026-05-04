@@ -9,6 +9,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import es.docklite.docklitebackend.audit.entity.ActivityAction;
 import es.docklite.docklitebackend.audit.service.ActivityLogService;
+import es.docklite.docklitebackend.common.exception.DockerOperationException;
 import es.docklite.docklitebackend.docker.dto.ContainerDto;
 import es.docklite.docklitebackend.docker.dto.CreateContainerRequest;
 import es.docklite.docklitebackend.docker.entity.ResourceType;
@@ -144,7 +145,7 @@ public class ContainerService {
                         .awaitCompletion();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new RuntimeException("Pull interrupted", e);
+                throw new DockerOperationException("Pull interrupted", e);
             }
             String pulledId = dockerClient.inspectImageCmd(repo + ":" + tag).exec().getId();
             try {

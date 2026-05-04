@@ -7,6 +7,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.SearchItem;
 import es.docklite.docklitebackend.audit.entity.ActivityAction;
 import es.docklite.docklitebackend.audit.service.ActivityLogService;
+import es.docklite.docklitebackend.common.exception.DockerOperationException;
 import es.docklite.docklitebackend.docker.dto.ImageDto;
 import es.docklite.docklitebackend.docker.dto.PullImageRequest;
 import es.docklite.docklitebackend.docker.dto.SearchResultDto;
@@ -49,7 +50,7 @@ public class ImageService {
                     .awaitCompletion();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("Pull interrupted", e);
+            throw new DockerOperationException("Pull interrupted", e);
         }
 
         InspectImageResponse info = dockerClient.inspectImageCmd(req.fullReference()).exec();
