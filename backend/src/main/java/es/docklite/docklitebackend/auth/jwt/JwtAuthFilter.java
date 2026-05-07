@@ -40,7 +40,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         Long userId = jwtProvider.getUserIdFromToken(token);
         User user = userRepository.findById(userId).orElse(null);
-        if (user == null){
+        if (user == null || !user.isEnabled()){
             chain.doFilter(request, response);
             return;
         }

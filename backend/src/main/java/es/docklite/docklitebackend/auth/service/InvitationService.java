@@ -6,7 +6,6 @@ import es.docklite.docklitebackend.auth.dto.CreateInvitationRequest;
 import es.docklite.docklitebackend.auth.dto.InvitationDto;
 import es.docklite.docklitebackend.auth.dto.InvitationStatusDto;
 import es.docklite.docklitebackend.auth.entity.Invitation;
-import es.docklite.docklitebackend.auth.jwt.JwtProvider;
 import es.docklite.docklitebackend.auth.repository.InvitationRepository;
 import es.docklite.docklitebackend.common.exception.EmailAlreadyExistsException;
 import es.docklite.docklitebackend.common.exception.InvitationNotFoundException;
@@ -17,11 +16,12 @@ import es.docklite.docklitebackend.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,7 +31,7 @@ public class InvitationService {
     private final InvitationRepository invitationRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtProvider jwtProvider;
+    private final AuthService authService;
 
     @Value("${app.public-url}")
     private String publicUrl;
@@ -58,10 +58,9 @@ public class InvitationService {
         return InvitationDto.from(inv, publicUrl);
     }
 
-    public List<InvitationDto> listAll() {
-        return invitationRepository.findAll().stream()
-                .map(inv -> InvitationDto.from(inv, publicUrl))
-                .toList();
+    public Page<InvitationDto> listAll(Pageable pageable) {
+        return invitationRepository.findAll(pageable)
+                .map(inv -> InvitationDto.from(inv, publicUrl));
     }
 
     public void cancel(Long id) {
@@ -98,8 +97,7 @@ public class InvitationService {
         inv.setUsesRemaining(inv.getUsesRemaining() - 1);
         invitationRepository.save(inv);
 
-        String jwt = jwtProvider.generateToken(user);
-        return new AuthResponse(jwt, user.getUsername(), user.getRole().name());
+        return authService.buildAuthResponse(user);
     }
 
     private Invitation findActive(String token) {

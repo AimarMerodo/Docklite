@@ -1,5 +1,6 @@
 package es.docklite.docklitebackend.docker.controller;
 
+import es.docklite.docklitebackend.common.dto.PageResponse;
 import es.docklite.docklitebackend.docker.dto.ContainerDto;
 import es.docklite.docklitebackend.docker.dto.CreateContainerRequest;
 import es.docklite.docklitebackend.docker.service.ContainerService;
@@ -10,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/containers")
 @RequiredArgsConstructor
@@ -20,9 +19,15 @@ public class ContainerController {
     private final ContainerService containerService;
 
     @GetMapping
-    public List<ContainerDto> list(Authentication auth,
-                                   @RequestParam(defaultValue = "true") boolean all) {
-        return containerService.list((User) auth.getPrincipal(), all);
+    public PageResponse<ContainerDto> list(Authentication auth,
+                                           @RequestParam(defaultValue = "true") boolean all,
+                                           @RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.of(
+                containerService.list((User) auth.getPrincipal(), all),
+                page,
+                size
+        );
     }
 
     @PostMapping

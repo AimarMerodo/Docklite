@@ -1,5 +1,6 @@
 package es.docklite.docklitebackend.docker.controller;
 
+import es.docklite.docklitebackend.common.dto.PageResponse;
 import es.docklite.docklitebackend.docker.dto.CreateVolumeRequest;
 import es.docklite.docklitebackend.docker.dto.VolumeDto;
 import es.docklite.docklitebackend.docker.service.VolumeService;
@@ -10,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/volumes")
 @RequiredArgsConstructor
@@ -20,8 +19,14 @@ public class VolumeController {
     private final VolumeService volumeService;
 
     @GetMapping
-    public List<VolumeDto> list(Authentication auth) {
-        return volumeService.list((User) auth.getPrincipal());
+    public PageResponse<VolumeDto> list(Authentication auth,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.of(
+                volumeService.list((User) auth.getPrincipal()),
+                page,
+                size
+        );
     }
 
     @PostMapping

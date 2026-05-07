@@ -1,5 +1,6 @@
 package es.docklite.docklitebackend.docker.controller;
 
+import es.docklite.docklitebackend.common.dto.PageResponse;
 import es.docklite.docklitebackend.docker.dto.CreateNetworkRequest;
 import es.docklite.docklitebackend.docker.dto.NetworkDto;
 import es.docklite.docklitebackend.docker.service.NetworkService;
@@ -10,8 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/networks")
 @RequiredArgsConstructor
@@ -20,8 +19,14 @@ public class NetworkController {
     private final NetworkService networkService;
 
     @GetMapping
-    public List<NetworkDto> list(Authentication auth) {
-        return networkService.list((User) auth.getPrincipal());
+    public PageResponse<NetworkDto> list(Authentication auth,
+                                         @RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.of(
+                networkService.list((User) auth.getPrincipal()),
+                page,
+                size
+        );
     }
 
     @PostMapping

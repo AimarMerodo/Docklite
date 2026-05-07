@@ -3,6 +3,7 @@ package es.docklite.docklitebackend.audit.controller;
 import es.docklite.docklitebackend.audit.dto.ActivityLogDto;
 import es.docklite.docklitebackend.audit.entity.ActivityLog;
 import es.docklite.docklitebackend.audit.repository.ActivityLogRepository;
+import es.docklite.docklitebackend.common.dto.PageResponse;
 import es.docklite.docklitebackend.user.entity.Role;
 import es.docklite.docklitebackend.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,13 @@ public class ActivityLogController {
     private final ActivityLogRepository repository;
 
     @GetMapping
-    public Page<ActivityLogDto> list(
+    public PageResponse<ActivityLogDto> list(
             Authentication auth,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         User user = (User) auth.getPrincipal();
         Page<ActivityLog> page = (user.getRole() == Role.ADMIN)
                 ? repository.findAll(pageable)
                 : repository.findByUserId(user.getId(), pageable);
-        return page.map(ActivityLogDto::from);
+        return PageResponse.from(page.map(ActivityLogDto::from));
     }
 }

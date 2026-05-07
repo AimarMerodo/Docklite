@@ -60,6 +60,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
     networks:
       - docklite-net
 
@@ -72,7 +78,8 @@ services:
       - "${FRONTEND_HTTP_PORT:-80}:80"
       - "${FRONTEND_HTTPS_PORT:-443}:443"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - docklite-net
 

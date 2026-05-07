@@ -302,6 +302,35 @@ GET {{apiV1}}/containers/no-existe-este-id
 Authorization: Bearer {{tokenAdmin}}
 
 
+### 404 — Crear con red inexistente
+POST {{apiV1}}/containers
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "image": "nginx:alpine",
+  "name": "red-mala",
+  "autoStart": false,
+  "networkId": "no-existe-esta-red"
+}
+
+
+### 403 — Crear con volumen del que no eres dueño (userb usa volumen de admin)
+### Requiere que admin tenga creado un volumen "admin-vol" antes.
+POST {{apiV1}}/containers
+Authorization: Bearer {{tokenUser}}
+Content-Type: application/json
+
+{
+  "image": "nginx:alpine",
+  "name": "vol-ajeno",
+  "autoStart": false,
+  "volumes": [
+    { "volumeName": "admin-vol", "containerPath": "/data", "readOnly": false }
+  ]
+}
+
+
 ### Pre-paso para 403 cross-user: admin crea container
 POST {{apiV1}}/containers
 Authorization: Bearer {{tokenAdmin}}

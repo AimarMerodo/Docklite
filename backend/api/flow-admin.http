@@ -143,6 +143,60 @@ client.global.set("containerId", response.body.id);
 %}
 
 
+### Crear container con red y volumen (campos opcionales del create)
+### Requiere haber creado antes la red "admin-net" y el volumen "admin-vol".
+POST {{apiV1}}/containers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "image": "nginx:alpine",
+  "name": "admin-demo-full",
+  "autoStart": true,
+  "networkId": "admin-net",
+  "volumes": [
+    { "volumeName": "admin-vol", "containerPath": "/data", "readOnly": false }
+  ]
+}
+
+
+### Crear container con env vars y mapeo de puertos
+### Levanta nginx accesible en http://localhost:8080
+POST {{apiV1}}/containers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "image": "nginx:alpine",
+  "name": "admin-demo-web",
+  "autoStart": true,
+  "env": [
+    { "name": "TZ", "value": "Europe/Madrid" }
+  ],
+  "ports": [
+    { "hostPort": 8080, "containerPort": 80, "protocol": "tcp" }
+  ]
+}
+
+
+### Crear container con políticas de producción (restart + límites)
+POST {{apiV1}}/containers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "image": "nginx:alpine",
+  "name": "admin-demo-prod",
+  "autoStart": true,
+  "restartPolicy": "unless-stopped",
+  "memoryMb": 256,
+  "cpus": 0.5,
+  "ports": [
+    { "hostPort": 8081, "containerPort": 80, "protocol": "tcp" }
+  ]
+}
+
+
 ### Inspect container
 GET {{apiV1}}/containers/{{containerId}}
 Authorization: Bearer {{token}}

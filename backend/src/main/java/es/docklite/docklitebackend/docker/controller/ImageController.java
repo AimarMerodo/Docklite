@@ -1,5 +1,6 @@
 package es.docklite.docklitebackend.docker.controller;
 
+import es.docklite.docklitebackend.common.dto.PageResponse;
 import es.docklite.docklitebackend.docker.dto.ImageDto;
 import es.docklite.docklitebackend.docker.dto.PullImageRequest;
 import es.docklite.docklitebackend.docker.dto.SearchResultDto;
@@ -22,8 +23,14 @@ public class ImageController {
     private final ImageService imageService;
 
     @GetMapping
-    public List<ImageDto> list(Authentication auth) {
-        return imageService.list((User) auth.getPrincipal());
+    public PageResponse<ImageDto> list(Authentication auth,
+                                       @RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "20") int size) {
+        return PageResponse.of(
+                imageService.list((User) auth.getPrincipal()),
+                page,
+                size
+        );
     }
 
     @PostMapping("/pull")

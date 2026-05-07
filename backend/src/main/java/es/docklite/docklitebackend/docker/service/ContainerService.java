@@ -2,17 +2,29 @@ package es.docklite.docklitebackend.docker.service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.AccessMode;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.InternetProtocol;
+import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.RestartPolicy;
+import com.github.dockerjava.api.model.Volume;
 import es.docklite.docklitebackend.audit.entity.ActivityAction;
 import es.docklite.docklitebackend.audit.service.ActivityLogService;
 import es.docklite.docklitebackend.common.exception.DockerOperationException;
 import es.docklite.docklitebackend.common.exception.SecurityMessages;
 import es.docklite.docklitebackend.docker.dto.ContainerDto;
 import es.docklite.docklitebackend.docker.dto.CreateContainerRequest;
+import es.docklite.docklitebackend.docker.dto.EnvVar;
+import es.docklite.docklitebackend.docker.dto.PortMapping;
+import es.docklite.docklitebackend.docker.dto.VolumeMount;
 import es.docklite.docklitebackend.docker.entity.ResourceType;
 import es.docklite.docklitebackend.user.entity.Role;
 import es.docklite.docklitebackend.user.entity.User;
@@ -20,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -49,10 +62,74 @@ public class ContainerService {
     public ContainerDto create(CreateContainerRequest req, User currentUser) {
         ensureImageAvailable(req.image(), currentUser);
 
-        var cmd = dockerClient.createContainerCmd(req.image());
+        CreateContainerCmd cmd = dockerClient.createContainerCmd(req.image());
         if (req.name() != null && !req.name().isBlank()) {
             cmd = cmd.withName(req.name());
         }
+
+        HostConfig hostConfig = HostConfig.newHostConfig();
+        boolean hostConfigUsed = false;
+
+        if (req.networkId() != null && !req.networkId().isBlank()) {
+            checkNetworkAccess(req.networkId(), currentUser);
+            hostConfig = hostConfig.withNetworkMode(req.networkId());
+            hostConfigUsed = true;
+        }
+
+        if (req.volumes() != null && !req.volumes().isEmpty()) {
+            List<Bind> binds = new ArrayList<>();
+            for (VolumeMount mount : req.volumes()) {
+                if (!ownershipService.hasAccess(mount.volumeName(), ResourceType.VOLUME, currentUser)) {
+                    throw new AccessDeniedException(SecurityMessages.ACCESS_DENIED);
+                }
+                Volume target = new Volume(mount.containerPath());
+                AccessMode mode = mount.readOnly() ? AccessMode.ro : AccessMode.rw;
+                binds.add(new Bind(mount.volumeName(), target, mode));
+            }
+            hostConfig = hostConfig.withBinds(binds);
+            hostConfigUsed = true;
+        }
+
+        if (req.env() != null && !req.env().isEmpty()) {
+            List<String> envList = req.env().stream()
+                    .map(e -> e.name() + "=" + (e.value() == null ? "" : e.value()))
+                    .toList();
+            cmd = cmd.withEnv(envList);
+        }
+
+        if (req.ports() != null && !req.ports().isEmpty()) {
+            List<ExposedPort> exposedPorts = new ArrayList<>();
+            Ports portBindings = new Ports();
+            for (PortMapping pm : req.ports()) {
+                InternetProtocol proto = pm.isUdp() ? InternetProtocol.UDP : InternetProtocol.TCP;
+                ExposedPort exposed = new ExposedPort(pm.containerPort(), proto);
+                exposedPorts.add(exposed);
+                portBindings.bind(exposed, Ports.Binding.bindPort(pm.hostPort()));
+            }
+            cmd = cmd.withExposedPorts(exposedPorts);
+            hostConfig = hostConfig.withPortBindings(portBindings);
+            hostConfigUsed = true;
+        }
+
+        if (req.restartPolicy() != null && !req.restartPolicy().isBlank()) {
+            hostConfig = hostConfig.withRestartPolicy(buildRestartPolicy(req.restartPolicy()));
+            hostConfigUsed = true;
+        }
+
+        if (req.memoryMb() != null) {
+            hostConfig = hostConfig.withMemory(req.memoryMb().longValue() * 1024L * 1024L);
+            hostConfigUsed = true;
+        }
+
+        if (req.cpus() != null) {
+            hostConfig = hostConfig.withNanoCPUs((long) (req.cpus() * 1_000_000_000L));
+            hostConfigUsed = true;
+        }
+
+        if (hostConfigUsed) {
+            cmd = cmd.withHostConfig(hostConfig);
+        }
+
         CreateContainerResponse response = cmd.exec();
         String containerId = response.getId();
 
@@ -160,6 +237,25 @@ public class ContainerService {
 
     private void checkAccess(String containerId, User user) {
         if (!ownershipService.hasAccess(containerId, ResourceType.CONTAINER, user)) {
+            throw new AccessDeniedException(SecurityMessages.ACCESS_DENIED);
+        }
+    }
+
+    private RestartPolicy buildRestartPolicy(String policy) {
+        return switch (policy.toLowerCase()) {
+            case "always" -> RestartPolicy.alwaysRestart();
+            case "on-failure" -> RestartPolicy.onFailureRestart(0);
+            case "unless-stopped" -> RestartPolicy.unlessStoppedRestart();
+            default -> RestartPolicy.noRestart();
+        };
+    }
+
+    private void checkNetworkAccess(String networkRef, User user) {
+        var info = dockerClient.inspectNetworkCmd().withNetworkId(networkRef).exec();
+        if (List.of("bridge", "host", "none").contains(info.getName())) {
+            return; // default networks are open to everyone
+        }
+        if (!ownershipService.hasAccess(info.getId(), ResourceType.NETWORK, user)) {
             throw new AccessDeniedException(SecurityMessages.ACCESS_DENIED);
         }
     }

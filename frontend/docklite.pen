@@ -596,7 +596,8 @@
                   "fill": "#E8E8E8",
                   "content": "Containers",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -641,7 +642,8 @@
                   "fill": "#E8E8E8",
                   "content": "Images",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -686,7 +688,8 @@
                   "fill": "#E8E8E8",
                   "content": "Volumes",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -1885,7 +1888,8 @@
                   "fill": "#E8E8E8",
                   "content": "Dashboard",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -1977,7 +1981,8 @@
                   "fill": "#E8E8E8",
                   "content": "Images",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -2022,7 +2027,8 @@
                   "fill": "#E8E8E8",
                   "content": "Volumes",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -3656,7 +3662,8 @@
                   "fill": "#E8E8E8",
                   "content": "Dashboard",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -3701,7 +3708,8 @@
                   "fill": "#E8E8E8",
                   "content": "Containers",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -3793,7 +3801,8 @@
                   "fill": "#E8E8E8",
                   "content": "Networks",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -3838,7 +3847,8 @@
                   "fill": "#E8E8E8",
                   "content": "Volumes",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -3883,7 +3893,8 @@
                   "fill": "#E8E8E8",
                   "content": "Activity",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -3943,7 +3954,8 @@
                   "fill": "#E8E8E8",
                   "content": "Settings",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -4014,7 +4026,8 @@
                   "fill": "#E8E8E8",
                   "content": "Users",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -4059,7 +4072,8 @@
                   "fill": "#E8E8E8",
                   "content": "Invitations",
                   "fontFamily": "Hanken Grotesk",
-                  "fontSize": 14
+                  "fontSize": 14,
+                  "fontWeight": "normal"
                 }
               ]
             },
@@ -5159,6 +5173,32 @@
           ]
         }
       ]
+    },
+    {
+      "type": "text",
+      "id": "cu1J5",
+      "x": 2200,
+      "y": -50,
+      "name": "vlbl",
+      "fill": "#62666d",
+      "content": "VARIANT 1 · Geist + glow style",
+      "fontFamily": "Inter",
+      "fontSize": 13,
+      "fontWeight": "500",
+      "letterSpacing": 0.4
+    },
+    {
+      "type": "text",
+      "id": "u1fD9j",
+      "x": 8500,
+      "y": -50,
+      "name": "nlbl",
+      "fill": "#62666d",
+      "content": "VARIANT 2 · DESIGN.md · Inter + canvas #010204",
+      "fontFamily": "Inter",
+      "fontSize": 13,
+      "fontWeight": "500",
+      "letterSpacing": 0.4
     }
   ],
   "themes": {

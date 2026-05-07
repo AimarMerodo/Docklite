@@ -47,6 +47,30 @@ El token se obtiene mediante `POST /auth/login` o aceptando una invitación (`PO
 | `409 Conflict` | Violación de unicidad (email/username/recurso ya existente). |
 | `500 Internal Server Error` | Error inesperado (capturado por el handler genérico). |
 
+### Healthcheck
+
+DockLite expone un endpoint público de healthcheck en
+`GET /actuator/health` (Spring Boot Actuator). Devuelve `{"status":"UP"}`
+si el contexto de Spring está sano y la conexión a la base de datos
+funciona. Lo usa Docker Compose para esperar a que el backend esté
+listo antes de arrancar el frontend.
+
+### Protección frente a fuerza bruta
+
+El endpoint `POST /auth/login` registra los intentos fallidos por
+email. Tras **5 intentos fallidos consecutivos**, la cuenta queda
+**bloqueada temporalmente durante 15 minutos**: cualquier nuevo
+intento durante ese periodo recibe un `423 Locked`. Un login correcto
+limpia el contador.
+
+### Cabeceras de seguridad
+
+Todas las respuestas incluyen las cabeceras de seguridad estándar:
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Strict-Transport-Security` (cuando se sirve por HTTPS, max-age 1 año)
+- `Referrer-Policy: strict-origin-when-cross-origin`
+
 ### Forma del cuerpo de error
 
 Todos los errores devuelven el mismo formato JSON:
@@ -66,6 +90,31 @@ Todos los errores devuelven el mismo formato JSON:
 
 El campo `fields` solo aparece en errores `400` derivados de `@Valid`.
 
+### Paginación
+
+Todos los endpoints de listado aceptan los siguientes parámetros opcionales y devuelven la misma estructura `PageResponse<T>`:
+
+| Param | Tipo | Default | Descripción |
+|-------|------|---------|-------------|
+| `page` | int | `0` | Número de página, base 0 |
+| `size` | int | `20` | Tamaño de página |
+
+Cuerpo de respuesta:
+
+```json
+{
+  "content": [ /* items de la página actual */ ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 145,
+  "totalPages": 8
+}
+```
+
+Si `page` excede `totalPages - 1`, `content` viene vacío pero `totalElements` y `totalPages` siguen reflejando el total real.
+
+Endpoints paginados: `GET /users`, `GET /admin/invitations`, `GET /activity`, `GET /containers`, `GET /images`, `GET /networks`, `GET /volumes`.
+
 ---
 
 ## 1. Autenticación
@@ -76,7 +125,7 @@ Endpoints relacionados con el inicio de sesión.
 
 **Acceso:** Público
 
-Inicia sesión con email y contraseña. Devuelve un JWT y la información mínima del usuario.
+Inicia sesión con email y contraseña. Devuelve un **par de tokens**: un access token de corta vida (15 min) y un refresh token de larga vida (7 días) que permite renovar el access sin volver a pedir la contraseña.
 
 **Body**
 ```json
@@ -89,7 +138,9 @@ Inicia sesión con email y contraseña. Devuelve un JWT y la información mínim
 **Respuesta `200 OK`**
 ```json
 {
-  "token": "eyJhbGciOiJIUzM4NCJ9...",
+  "accessToken": "eyJhbGciOiJIUzM4NCJ9...",
+  "refreshToken": "0a6cd41c-0a67-4234-8e35-88e1910ff630",
+  "expiresInSeconds": 900,
   "username": "admin",
   "role": "ADMIN"
 }
@@ -97,6 +148,41 @@ Inicia sesión con email y contraseña. Devuelve un JWT y la información mínim
 
 **Errores**
 - `401` — credenciales incorrectas (mensaje genérico, no distingue email mal de password mal por seguridad).
+- `403` — la cuenta está deshabilitada.
+- `423` — la cuenta está bloqueada por demasiados intentos fallidos (15 min de espera).
+
+---
+
+### `POST /auth/refresh`
+
+**Acceso:** Público (requiere refresh token válido)
+
+Genera un par nuevo de tokens (access + refresh) a partir de un refresh token vivo. Implementa **rotación**: el refresh token usado se marca como revocado y se emite uno nuevo, así un refresh token solo se puede usar una vez.
+
+**Body**
+```json
+{ "refreshToken": "0a6cd41c-0a67-4234-8e35-88e1910ff630" }
+```
+
+**Respuesta `200 OK`** — mismo formato que `/auth/login`.
+
+**Errores**
+- `401` — refresh token inexistente, revocado o caducado.
+
+---
+
+### `POST /auth/logout`
+
+**Acceso:** Público (requiere el refresh token a invalidar)
+
+Marca el refresh token como revocado, invalidándolo de inmediato. El access token actual sigue siendo válido hasta que caduque (máximo 15 min); en frontend basta con borrarlo del storage.
+
+**Body**
+```json
+{ "refreshToken": "0a6cd41c-0a67-4234-8e35-88e1910ff630" }
+```
+
+**Respuesta:** `204 No Content`
 
 ---
 
@@ -265,6 +351,45 @@ Lista todos los usuarios registrados.
 
 ---
 
+### `POST /admin/users/{id}/reset-password`
+
+**Acceso:** ADMIN
+
+Genera una nueva contraseña aleatoria para el usuario indicado, la
+guarda cifrada en BBDD y la devuelve **una sola vez** en la respuesta
+para que el administrador pueda comunicársela al usuario por el canal
+que prefiera (no se almacena en claro en ningún sitio).
+
+**Respuesta `200 OK`**
+```json
+{
+  "userId": 8,
+  "username": "alice",
+  "temporaryPassword": "kFx9dHmW3p2q"
+}
+```
+
+**Errores**
+- `404` — usuario no encontrado.
+
+---
+
+### `DELETE /admin/users/{id}` · `POST /admin/users/{id}/enable`
+
+**Acceso:** ADMIN
+
+Desactiva o reactiva un usuario. La desactivación es **soft**: la fila
+permanece en BBDD para preservar la trazabilidad del histórico, pero
+el usuario no podrá iniciar sesión y los JWT que tenga emitidos
+dejarán de funcionar inmediatamente.
+
+**Respuesta:** `204 No Content`
+
+**Errores**
+- `404` — usuario no encontrado.
+
+---
+
 ## 4. Contenedores
 
 Operaciones sobre contenedores Docker. Aplica el patrón de propiedad: un USER solo ve y opera sus contenedores; un ADMIN ve y opera todos.
@@ -297,24 +422,58 @@ Lista contenedores. Por defecto incluye los parados.
 
 **Acceso:** USER
 
-Crea un contenedor. Si la imagen no está en local, la **descarga automáticamente** desde Docker Hub antes de crear el contenedor (pull-on-create).
+Crea un contenedor. Si la imagen no está en local, la **descarga automáticamente** desde Docker Hub antes de crear el contenedor (pull-on-create). Permite además asignar una red y montar volúmenes en el momento de la creación.
 
 **Body**
 ```json
 {
   "image": "nginx:alpine",
   "name": "my-nginx",
-  "autoStart": true
+  "autoStart": true,
+  "networkId": "my-net",
+  "volumes": [
+    { "volumeName": "data-vol",   "containerPath": "/data",                "readOnly": false },
+    { "volumeName": "config-vol", "containerPath": "/etc/nginx/conf.d",    "readOnly": true  }
+  ],
+  "env": [
+    { "name": "TZ",       "value": "Europe/Madrid" },
+    { "name": "LOG_LEVEL", "value": "info" }
+  ],
+  "ports": [
+    { "hostPort": 8080, "containerPort": 80,  "protocol": "tcp" },
+    { "hostPort": 5353, "containerPort": 53,  "protocol": "udp" }
+  ],
+  "restartPolicy": "unless-stopped",
+  "memoryMb": 512,
+  "cpus": 1.5
 }
 ```
 
-`name` es opcional (Docker asigna uno aleatorio si no se especifica).
+**Campos**
+
+| Campo | Tipo | Obligatorio | Notas |
+|---|---|---|---|
+| `image` | string | sí | Imagen Docker. Si no está en local se hace pull. |
+| `name` | string | no | Si se omite, Docker asigna uno aleatorio. |
+| `autoStart` | boolean | sí | Si `true`, arranca el contenedor tras crearlo. |
+| `networkId` | string | no | ID o nombre de red a la que conectar. Acepta también las redes default `bridge`, `host`, `none`. Si se omite, Docker usa `bridge`. |
+| `volumes` | array | no | Lista de montajes. Cada entrada: `volumeName`, `containerPath`, `readOnly`. |
+| `env` | array | no | Variables de entorno. Cada entrada: `name`, `value` (`value` puede ser cadena vacía). |
+| `ports` | array | no | Mapeos de puertos host → contenedor. Cada entrada: `hostPort`, `containerPort`, `protocol` (`tcp` por defecto, también admite `udp`). |
+| `restartPolicy` | string | no | Política de reinicio: `no` (default), `always`, `on-failure`, `unless-stopped`. |
+| `memoryMb` | integer | no | Límite de memoria en megabytes. Mínimo 1. |
+| `cpus` | number | no | Límite de CPU (admite decimales, ej. `1.5`). Mínimo `0.1`. |
 
 **Respuesta `201 Created`** — DTO del contenedor creado.
 
 **Side effects**
 - Inserta fila en `docker_resources` con el usuario actual como `owner_id`.
 - Inserta entrada `CREATE` (y `START` si `autoStart=true`) en `activity_log`.
+
+**Errores**
+- `400` — falta `image` o algún campo de los volúmenes está vacío.
+- `403` — el usuario no tiene acceso a la red o a alguno de los volúmenes referenciados.
+- `404` — la red o el volumen no existen.
 
 ---
 
@@ -645,6 +804,8 @@ Lista paginada del histórico de acciones. USER ve solo las suyas, ADMIN ve toda
 | Método | Ruta | Acceso |
 |---|---|---|
 | POST | `/auth/login` | Público |
+| POST | `/auth/refresh` | Público (con refresh token) |
+| POST | `/auth/logout` | Público (con refresh token) |
 | GET | `/invitations/{token}` | Público |
 | POST | `/invitations/{token}/accept` | Público |
 | GET | `/admin/invitations` | ADMIN |
@@ -653,6 +814,9 @@ Lista paginada del histórico de acciones. USER ve solo las suyas, ADMIN ve toda
 | GET | `/users/me` | USER |
 | PUT | `/users/me` | USER |
 | GET | `/users` | ADMIN |
+| POST | `/admin/users/{id}/reset-password` | ADMIN |
+| DELETE | `/admin/users/{id}` | ADMIN |
+| POST | `/admin/users/{id}/enable` | ADMIN |
 | GET | `/containers` | USER |
 | POST | `/containers` | USER |
 | GET | `/containers/{id}` | USER (owner) |
@@ -681,4 +845,4 @@ Lista paginada del histórico de acciones. USER ve solo las suyas, ADMIN ve toda
 | GET | `/system/dashboard` | USER |
 | GET | `/activity` | USER |
 
-**Total: 36 endpoints** organizados en **9 bloques funcionales**.
+**Total: 41 endpoints** organizados en **9 bloques funcionales** (más `GET /actuator/health`, expuesto por Spring Boot Actuator).
