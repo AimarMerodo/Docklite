@@ -76,3 +76,4 @@ coverage/
 # ==== Claude Code / claude-flow workspace ====
 .claude/
 .claude-flow/
+CLAUDE.md
