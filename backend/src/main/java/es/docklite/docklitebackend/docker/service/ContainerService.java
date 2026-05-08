@@ -372,7 +372,7 @@ public class ContainerService {
                 // internally when --cpus is given).
                 long period = 100_000L;
                 long quota = (long) (req.cpus() * period);
-                cmd = cmd.withCpuPeriod((int) period).withCpuQuota((int) quota);
+                cmd = cmd.withCpuPeriod(period).withCpuQuota(quota);
             }
             cmd.exec();
             activityLogService.log(currentUser.getId(), fullId, ResourceType.CONTAINER,
