@@ -28,10 +28,10 @@ fi
 RESET="\033[0m"; BOLD="\033[1m"
 BLUE="\033[1;34m"; GREEN="\033[1;32m"; YELLOW="\033[1;33m"; RED="\033[1;31m"
 
-log()   { echo -e "${BLUE}[ℹ]${RESET} $*"; }
-ok()    { echo -e "${GREEN}[✓]${RESET} $*"; }
+log()   { echo -e "${BLUE}[i]${RESET} $*"; }
+ok()    { echo -e "${GREEN}[ok]${RESET} $*"; }
 warn()  { echo -e "${YELLOW}[!]${RESET} $*"; }
-err()   { echo -e "${RED}[✗]${RESET} $*" >&2; }
+err()   { echo -e "${RED}[x]${RESET} $*" >&2; }
 hr()    { echo "──────────────────────────────────────────────"; }
 
 
@@ -166,8 +166,22 @@ ensure_repo() {
     target_dir=$(ask_input "Where to install DockLite?" "$PWD/docklite")
 
     if [[ -d "$target_dir" ]]; then
-        if [[ -f "$target_dir/docker-compose.yml" && -d "$target_dir/backend" ]]; then
-            log "Reusing existing checkout at $target_dir"
+        if [[ -f "$target_dir/docker-compose.yml" && -d "$target_dir/backend" && -d "$target_dir/frontend" ]]; then
+            warn "An existing DockLite checkout was found at $target_dir."
+            log "Reinstalling cleanly is the safest option — your data is in"
+            log "Docker volumes, not in this directory, so a fresh clone keeps"
+            log "your databases and contents intact."
+            if ask_yes_no "Wipe $target_dir and re-clone the latest version?" y; then
+                # Stop any stack still running from the old checkout so it
+                # doesn't fight with us over the docker daemon while we
+                # rebuild.
+                ( cd "$target_dir" && docker compose down 2>/dev/null || true )
+                $SUDO rm -rf "$target_dir"
+                git clone "$REPO_URL" "$target_dir"
+                ok "Re-cloned fresh."
+            else
+                log "Reusing existing checkout."
+            fi
         else
             err "Directory $target_dir exists but doesn't look like DockLite."
             err "Move/remove it or pick a different path."
@@ -268,8 +282,45 @@ FRONTEND_HTTP_PORT="" FRONTEND_HTTPS_PORT=""
 ADMIN_USERNAME="" ADMIN_EMAIL="" ADMIN_PASSWORD="" GENERATED_PASSWORD=false
 
 ask_deployment_mode() {
+    # Port 80 has to be free for Let's Encrypt's HTTP-01 challenge. If it's
+    # already taken (very common: server has nginx/Caddy/NPM in front),
+    # certbot can't bind, so we skip the Let's Encrypt path and let DockLite
+    # run as a plain-HTTP backend that the existing reverse proxy can forward
+    # to with its own TLS termination.
+    local has_existing_proxy=false
+    if port_in_use 80; then
+        has_existing_proxy=true
+    fi
+
     echo
     log "Deployment mode"
+    if $has_existing_proxy; then
+        warn "Port 80 is in use on this server — usually means there's already a"
+        warn "reverse proxy (nginx, Caddy, NPM, Traefik…). The Let's Encrypt"
+        warn "option needs port 80 free, so it's disabled."
+        echo "  1) Behind reverse proxy  → DockLite as plain HTTP on a custom port"
+        echo "                              (your existing proxy terminates TLS)"
+        echo "  2) Public IP only         → HTTP (no certificate, no proxy)"
+        while true; do
+            read -rp "Choose [1-2]: " choice
+            case "$choice" in
+                1)
+                    DEPLOY_MODE="proxy"
+                    SERVER_NAME=$(ask_input "Public domain (used in invitation links, e.g. docklite.example.com)")
+                    # Pick a high port the user is unlikely to have busy.
+                    APP_PUBLIC_URL="https://$SERVER_NAME"
+                    return ;;
+                2)
+                    DEPLOY_MODE="ip"
+                    local detected
+                    detected="$(curl -fsS --max-time 3 https://api.ipify.org 2>/dev/null || echo)"
+                    SERVER_NAME=$(ask_input "Public IP" "$detected")
+                    APP_PUBLIC_URL="http://$SERVER_NAME"
+                    return ;;
+            esac
+        done
+    fi
+
     echo "  1) Domain  → HTTPS via Let's Encrypt (recommended)"
     echo "  2) Public IP only  → HTTP (no certificate)"
     while true; do
@@ -309,6 +360,25 @@ ask_admin_account() {
 
 ask_ports() {
     echo
+    if [[ "$DEPLOY_MODE" == "proxy" ]]; then
+        log "DockLite HTTP port — your existing reverse proxy will forward here"
+        # Default to 8080 — easier to remember than the next free random port.
+        local default_port=8080
+        if port_in_use "$default_port"; then default_port=8081; fi
+        if port_in_use "$default_port"; then default_port=8082; fi
+        while true; do
+            FRONTEND_HTTP_PORT=$(ask_input "HTTP port" "$default_port")
+            if port_in_use "$FRONTEND_HTTP_PORT"; then
+                warn "Port $FRONTEND_HTTP_PORT is already in use."
+                ask_yes_no "Pick a different port?" && continue
+            fi
+            break
+        done
+        # Don't expose 443 in proxy mode — the upstream proxy owns it.
+        FRONTEND_HTTPS_PORT="443"
+        return
+    fi
+
     log "Host ports for the frontend (the only thing exposed publicly)"
     while true; do
         FRONTEND_HTTP_PORT=$(ask_input "HTTP port" "80")
@@ -408,11 +478,17 @@ generate_https_nginx_conf() {
 # ─────────── Stack orchestration ───────────
 deploy_stack() {
     log "Building and starting the stack..."
-    if [[ "$DEPLOY_MODE" == "domain" ]]; then
-        docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
-    else
-        docker compose up -d --build
-    fi
+    case "$DEPLOY_MODE" in
+        domain)
+            docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+            ;;
+        proxy)
+            docker compose -f docker-compose.yml -f docker-compose.proxy.yml up -d --build
+            ;;
+        *)
+            docker compose up -d --build
+            ;;
+    esac
 
     log "Waiting for backend to become healthy..."
     local tries=60   # 60 * 2s = 2 min cap, enough for first DB schema + admin bootstrap
@@ -440,6 +516,48 @@ deploy_stack() {
         ok "Backend healthy."
     fi
     ok "Stack started."
+}
+
+
+# ─────────── Reverse-proxy guidance (proxy mode) ───────────
+print_proxy_guidance() {
+    echo
+    hr
+    log "DockLite is running on http://localhost:$FRONTEND_HTTP_PORT"
+    log "To make it reachable at $APP_PUBLIC_URL, add a vhost to your"
+    log "existing reverse proxy. Examples:"
+    echo
+    cat <<EOF
+  ── nginx ──────────────────────────────────────────────────────
+  server {
+      listen 443 ssl;
+      server_name $SERVER_NAME;
+      ssl_certificate     /path/to/fullchain.pem;
+      ssl_certificate_key /path/to/privkey.pem;
+
+      location / {
+          proxy_pass http://127.0.0.1:$FRONTEND_HTTP_PORT;
+          proxy_http_version 1.1;
+          proxy_set_header Host \$host;
+          proxy_set_header X-Real-IP \$remote_addr;
+          proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto \$scheme;
+      }
+  }
+
+  ── Caddy ──────────────────────────────────────────────────────
+  $SERVER_NAME {
+      reverse_proxy 127.0.0.1:$FRONTEND_HTTP_PORT
+  }
+
+  ── Nginx Proxy Manager ────────────────────────────────────────
+  Add a Proxy Host:
+      Domain Names:   $SERVER_NAME
+      Forward to:     127.0.0.1   port $FRONTEND_HTTP_PORT
+      SSL: request Let's Encrypt cert
+EOF
+    echo
+    hr
 }
 
 
@@ -474,6 +592,11 @@ print_summary() {
 
 # ─────────── Main ───────────
 main() {
+    # Wipe the terminal so the installer's output starts on a clean canvas,
+    # uncluttered by whatever scrollback was there before (apt updates,
+    # ssh banner, motd, etc.).
+    clear 2>/dev/null || printf '\033[2J\033[H'
+
     hr
     echo -e "${BOLD}DockLite — interactive installer${RESET}"
     hr
@@ -505,6 +628,10 @@ main() {
     fi
 
     deploy_stack
+
+    if [[ "$DEPLOY_MODE" == "proxy" ]]; then
+        print_proxy_guidance
+    fi
     print_summary
 }
 

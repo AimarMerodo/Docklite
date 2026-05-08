@@ -1,0 +1,17 @@
+# ──────────────────────────────────────────────────────────────
+# Reverse-proxy overlay — used when DockLite runs behind an
+# existing reverse proxy (nginx, Caddy, NPM, Traefik). install.sh
+# applies it automatically when port 80 of the host is already
+# taken (very common scenario):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.proxy.yml up -d
+#
+# It overrides the frontend's `ports` to only publish HTTP on the
+# user-chosen port — port 443 is owned by the upstream proxy and
+# must NOT be re-bound by DockLite.
+# ──────────────────────────────────────────────────────────────
+
+services:
+  frontend:
+    ports: !override
+      - "${FRONTEND_HTTP_PORT:-8080}:80"
