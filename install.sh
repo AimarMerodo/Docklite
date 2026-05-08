@@ -170,20 +170,28 @@ ensure_repo() {
 
     if [[ -d "$target_dir" ]]; then
         if [[ -f "$target_dir/docker-compose.yml" && -d "$target_dir/backend" && -d "$target_dir/frontend" ]]; then
-            warn "An existing DockLite checkout was found at $target_dir."
-            log "Reinstalling cleanly is the safest option — your data is in"
-            log "Docker volumes, not in this directory, so a fresh clone keeps"
-            log "your databases and contents intact."
-            if ask_yes_no "Wipe $target_dir and re-clone the latest version?" y; then
-                # Stop any stack still running from the old checkout so it
-                # doesn't fight with us over the docker daemon while we
-                # rebuild.
-                ( cd "$target_dir" && docker compose down 2>/dev/null || true )
+            warn "An existing DockLite installation was found at $target_dir."
+            warn "A fresh reinstall will WIPE the existing database (postgres_data"
+            warn "volume) and any other DockLite docker volumes. All your users,"
+            warn "containers' ownership records, invitations and activity logs"
+            warn "will be lost."
+            log "If you only want to UPDATE DockLite without losing data, abort"
+            log "now and run instead:    cd $target_dir && git pull && docker"
+            log "compose up -d --build"
+            if ask_yes_no "Wipe $target_dir AND its docker volumes, and re-clone fresh?" n; then
+                # Stop the stack and drop volumes so a brand-new postgres
+                # container starts with the postgres password we're about
+                # to generate (postgres only honors POSTGRES_PASSWORD on
+                # FIRST init of the data dir — keeping the old volume
+                # would cause an auth-failed loop on the next start).
+                ( cd "$target_dir" && docker compose down -v 2>/dev/null || true )
+                ( cd "$target_dir" && docker compose -f docker-compose.yml -f docker-compose.proxy.yml down -v 2>/dev/null || true )
+                ( cd "$target_dir" && docker compose -f docker-compose.yml -f docker-compose.https.yml down -v 2>/dev/null || true )
                 $SUDO rm -rf "$target_dir"
                 git clone "$REPO_URL" "$target_dir"
-                ok "Re-cloned fresh."
+                ok "Re-cloned fresh; old data wiped."
             else
-                log "Reusing existing checkout."
+                log "Reusing existing checkout (and existing data volumes)."
             fi
         else
             err "Directory $target_dir exists but doesn't look like DockLite."
