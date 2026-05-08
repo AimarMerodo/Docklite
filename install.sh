@@ -66,8 +66,11 @@ ask_secret() {
     # ask_secret "Question (blank = autogenerate)"
     local prompt="$1" answer
     read -rsp "$prompt: " answer
-    echo
-    echo "$answer"
+    # Newline goes to stderr so it's visible on screen but NOT captured
+    # by `$(...)`. Otherwise the prompt would smash into the next log line
+    # (and the answer would gain a leading \n that breaks .env writes).
+    echo >&2
+    printf '%s' "$answer"
 }
 
 generate_secret() { openssl rand -hex 32; }                       # 64 hex chars (256 bits)

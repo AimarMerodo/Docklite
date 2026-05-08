@@ -10,9 +10,8 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# Lock files MUST be committed for reproducible builds — `npm ci`
+# (used by the Dockerfile) requires package-lock.json to exist.
 
 # ==== Logs ====
 logs/
