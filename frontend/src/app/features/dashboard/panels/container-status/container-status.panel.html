@@ -1,0 +1,39 @@
+<header
+  class="flex items-end justify-between px-5 pt-5 pb-3 border-b border-hairline"
+>
+  <h2 class="text-[15px] font-medium tracking-[-0.2px] text-ink">
+    Estado de contenedores
+  </h2>
+  <a
+    routerLink="/containers"
+    class="text-xs text-ink-subtle hover:text-ink transition-colors"
+  >
+    Ver todos →
+  </a>
+</header>
+
+@if (loading()) {
+  <div class="px-5 py-6 text-sm text-ink-subtle">Cargando…</div>
+} @else if (visible().length === 0) {
+  <div class="px-5 py-8 text-center">
+    <p class="text-sm text-ink">Sin contenedores</p>
+    <p class="mt-1 text-xs text-ink-subtle">Crea uno para verlo aquí.</p>
+  </div>
+} @else {
+  <ul class="divide-y divide-hairline-tertiary">
+    @for (c of visible(); track c.id) {
+      <li class="flex items-center gap-3 px-5 py-2.5 text-sm">
+        <a
+          [routerLink]="['/containers', shortId(c.id)]"
+          class="flex-1 min-w-0 truncate text-ink hover:text-primary-hover transition-colors"
+        >
+          {{ c.name }}
+        </a>
+        <span class="font-mono text-xs text-ink-subtle truncate max-w-[40%]">
+          {{ c.image }}
+        </span>
+        <app-status-pill [state]="c.state" />
+      </li>
+    }
+  </ul>
+}

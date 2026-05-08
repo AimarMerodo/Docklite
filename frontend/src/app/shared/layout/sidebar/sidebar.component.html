@@ -1,0 +1,168 @@
+<a
+  routerLink="/dashboard"
+  class="flex items-center px-5 h-16 shrink-0 border-b border-hairline"
+  aria-label="DockLite"
+>
+  <img
+    src="brand/lockup-h-dark.svg"
+    alt="DockLite"
+    class="h-10 w-auto"
+  />
+</a>
+
+<nav class="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+  @for (group of visibleGroups(); track group.label) {
+    <div>
+      <p
+        class="px-3 mb-1.5 text-[13px] font-medium tracking-[0.4px] uppercase text-ink-tertiary"
+      >
+        {{ group.label }}
+      </p>
+      <ul class="space-y-0.5">
+        @for (item of group.items; track item.path) {
+          <li>
+            <a
+              [routerLink]="item.path"
+              routerLinkActive
+              #rla="routerLinkActive"
+              class="flex items-center gap-2.5 h-10 px-3 rounded-md text-sm transition-colors"
+              [class.bg-surface-2]="rla.isActive"
+              [class.text-ink]="rla.isActive"
+              [class.text-ink-subtle]="!rla.isActive"
+              [class.hover:text-ink]="!rla.isActive"
+              [class.hover:bg-surface-2]="!rla.isActive"
+            >
+              <span
+                class="inline-flex items-center justify-center w-5 h-5"
+                [class.text-primary]="rla.isActive"
+                aria-hidden="true"
+              >
+                @switch (item.icon) {
+                  @case ('dashboard') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M3 12h3M18 12h3M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
+                      <circle cx="12" cy="12" r="4" />
+                      <path d="m12 12 3-2.5" />
+                    </svg>
+                  }
+                  @case ('containers') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" />
+                      <path d="m3.3 7.5 8.7 5 8.7-5M12 22V12.5" />
+                    </svg>
+                  }
+                  @case ('images') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect x="3" y="4" width="18" height="14" rx="2" />
+                      <circle cx="9" cy="10" r="2" />
+                      <path d="m21 16-5-5-9 9" />
+                    </svg>
+                  }
+                  @case ('network') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="5" r="2" />
+                      <circle cx="5" cy="19" r="2" />
+                      <circle cx="19" cy="19" r="2" />
+                      <path d="M12 7v4M5 17l5-5M19 17l-5-5" />
+                    </svg>
+                  }
+                  @case ('volume') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <ellipse cx="12" cy="6" rx="8" ry="3" />
+                      <path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6" />
+                      <path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
+                    </svg>
+                  }
+                  @case ('users') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="9" cy="8" r="3" />
+                      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+                      <circle cx="17" cy="9" r="2" />
+                      <path d="M21 19c0-2.2-1.8-4-4-4" />
+                    </svg>
+                  }
+                  @case ('mail') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect x="3" y="5" width="18" height="14" rx="2" />
+                      <path d="m3 7 9 6 9-6" />
+                    </svg>
+                  }
+                }
+              </span>
+              <span>{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</nav>
+
+<div
+  class="px-4 py-3 shrink-0 border-t border-hairline text-[12px] text-ink-tertiary"
+>
+  DockLite · {{ year }}
+</div>

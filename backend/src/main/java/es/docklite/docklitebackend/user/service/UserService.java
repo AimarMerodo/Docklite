@@ -4,10 +4,13 @@ import es.docklite.docklitebackend.auth.service.RefreshTokenService;
 import es.docklite.docklitebackend.common.exception.InvalidCredentialsException;
 import es.docklite.docklitebackend.user.dto.PasswordResetResponse;
 import es.docklite.docklitebackend.user.dto.UpdateProfileRequest;
+import es.docklite.docklitebackend.user.dto.UserDto;
 import es.docklite.docklitebackend.user.entity.User;
 import es.docklite.docklitebackend.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +28,10 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+
+    public Page<UserDto> list(Pageable pageable) {
+        return userRepository.findAll(pageable).map(UserDto::from);
+    }
 
     public User updatePassword(User currentUser, UpdateProfileRequest req) {
         if (!passwordEncoder.matches(req.currentPassword(), currentUser.getPasswordHash())) {

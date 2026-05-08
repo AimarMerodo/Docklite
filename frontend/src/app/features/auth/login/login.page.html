@@ -1,0 +1,73 @@
+<div class="min-h-screen flex items-center justify-center px-4 bg-canvas">
+  <div class="w-full max-w-md">
+    <div class="flex items-center gap-2 mb-8">
+      <span
+        class="inline-flex items-center justify-center h-8 w-8 rounded-md bg-primary/10 text-primary"
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path
+            d="M21 11h-2.5V8.5H16V11h-2.5V8.5H11V11H8.5V8.5H6V11H3.5a.5.5 0 0 0-.5.5c0 3 2 6 7 6 4 0 7-1 9-4h2.5a.5.5 0 0 0 .35-.85L21 11Z"
+          />
+        </svg>
+      </span>
+      <span class="text-lg font-semibold tracking-tight">DockLite</span>
+    </div>
+
+    <div class="bg-surface-1 border border-hairline rounded-lg p-8">
+      <h1 class="text-2xl font-semibold tracking-tight mb-1">Inicia sesión</h1>
+      <p class="text-sm text-ink-subtle mb-6">
+        Accede a tu panel de gestión de contenedores.
+      </p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4" novalidate>
+        <div>
+          <label for="email" class="block text-sm mb-1.5 text-ink-muted">Email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-ink placeholder:text-ink-tertiary"
+            placeholder="admin@docklite.local"
+          />
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm mb-1.5 text-ink-muted">
+            Contraseña
+          </label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-ink placeholder:text-ink-tertiary"
+            placeholder="••••••••"
+          />
+        </div>
+
+        @if (errorMessage()) {
+          <div
+            class="rounded-md border border-hairline-strong bg-surface-2 px-3 py-2 text-sm text-ink"
+            role="alert"
+          >
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="loading() || form.invalid"
+          class="w-full h-10 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary text-sm font-medium transition-colors"
+        >
+          {{ loading() ? 'Entrando…' : 'Entrar' }}
+        </button>
+      </form>
+    </div>
+
+    <p class="mt-6 text-center text-xs text-ink-tertiary">
+      ¿Tienes una invitación? Pega el enlace en la barra de direcciones.
+    </p>
+  </div>
+</div>

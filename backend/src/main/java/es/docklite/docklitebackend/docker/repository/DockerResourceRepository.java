@@ -15,4 +15,8 @@ public interface DockerResourceRepository extends JpaRepository<DockerResource, 
     void deleteByResourceIdAndResourceType(String resourceId, ResourceType type);
 
     void deleteByResourceIdAndResourceTypeAndOwnerId(String resourceId, ResourceType type, Long ownerId);
+
+    List<DockerResource> findByResourceIdAndResourceType(String resourceId, ResourceType type);
+
+    List<DockerResource> findByResourceIdInAndResourceType(List<String> resourceIds, ResourceType type);
 }

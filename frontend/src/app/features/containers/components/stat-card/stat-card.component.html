@@ -1,0 +1,11 @@
+<header class="flex items-center justify-between">
+  <span [class]="labelClasses()" class="font-mono text-[11px]">
+    {{ label() }}
+  </span>
+  <span [class]="iconClasses()" class="inline-flex items-center justify-center">
+    <ng-content />
+  </span>
+</header>
+<p [class]="valueClasses()" class="text-[32px] font-bold leading-none tabular-nums">
+  {{ value() }}
+</p>

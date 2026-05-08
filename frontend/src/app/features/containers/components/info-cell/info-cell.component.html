@@ -1,0 +1,15 @@
+<dt
+  class="text-[11px] font-medium tracking-[0.4px] uppercase text-ink-tertiary mb-1"
+>
+  {{ label() }}
+</dt>
+<dd
+  [class.font-mono]="mono()"
+  [class.truncate]="truncate()"
+  [class.text-danger]="tone() === 'danger'"
+  [class.text-success]="tone() === 'success'"
+  [class.text-ink]="tone() === 'default'"
+  class="text-sm"
+>
+  {{ value() }}
+</dd>

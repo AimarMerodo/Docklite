@@ -1,0 +1,92 @@
+@if (state(); as s) {
+  <div
+    class="fixed inset-0 z-[60] flex items-center justify-center px-4 py-8 bg-overlay backdrop-blur-sm"
+    role="dialog"
+    aria-modal="true"
+    (mousedown)="onBackdropMouseDown($event)"
+    (click)="onBackdropClick($event)"
+    (keydown.escape)="onCancel()"
+    tabindex="-1"
+  >
+    <div
+      class="w-full rounded-xl bg-surface-1 border border-hairline-strong shadow-2xl overflow-hidden"
+      [class.max-w-md]="!s.options.secondaryConfirmText"
+      [class.max-w-xl]="!!s.options.secondaryConfirmText"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="flex items-start gap-3 px-6 pt-5 pb-4">
+        <span
+          class="inline-flex items-center justify-center w-9 h-9 rounded-full shrink-0"
+          [ngClass]="isDanger() ? 'bg-danger/15 text-danger' : 'bg-primary/15 text-primary'"
+        >
+          @if (isDanger()) {
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 9v4M12 17h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.7 3h16.96a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z" />
+            </svg>
+          } @else {
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4M12 8h.01" />
+            </svg>
+          }
+        </span>
+        <div class="flex-1 min-w-0">
+          <h2 class="text-base font-semibold text-ink mb-1">{{ s.options.title }}</h2>
+          <p class="text-sm text-ink-subtle whitespace-pre-line">
+            {{ s.options.message }}
+          </p>
+        </div>
+      </header>
+
+      <footer
+        class="flex items-center justify-end gap-2 px-6 py-3 bg-surface-2/40 border-t border-hairline"
+      >
+        @if (!s.options.hideCancel) {
+          <button
+            type="button"
+            class="h-9 px-4 rounded-md bg-surface-2 hover:bg-surface-3 text-sm text-ink transition-colors whitespace-nowrap"
+            (click)="onCancel()"
+          >
+            {{ s.options.cancelText ?? 'Cancelar' }}
+          </button>
+        }
+        <button
+          type="button"
+          class="h-9 px-4 rounded-md text-sm font-medium transition-colors whitespace-nowrap"
+          [ngClass]="primaryClasses()"
+          (click)="onConfirm()"
+        >
+          {{ s.options.confirmText ?? 'Aceptar' }}
+        </button>
+        @if (s.options.secondaryConfirmText) {
+          <button
+            type="button"
+            class="h-9 px-4 rounded-md text-sm font-medium transition-colors whitespace-nowrap"
+            [ngClass]="secondaryClasses()"
+            (click)="onSecondary()"
+          >
+            {{ s.options.secondaryConfirmText }}
+          </button>
+        }
+      </footer>
+    </div>
+  </div>
+}

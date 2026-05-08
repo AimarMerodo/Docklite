@@ -1,0 +1,1896 @@
+<section class="mx-auto px-6 md:px-8 py-6 max-w-[1440px]">
+  @if (loading()) {
+    <div
+      class="rounded-lg border border-hairline bg-surface-1 p-8 text-sm text-ink-subtle"
+    >
+      Cargando contenedor…
+    </div>
+  } @else if (errorMessage()) {
+    <div
+      class="rounded-md border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger"
+      role="alert"
+    >
+      {{ errorMessage() }}
+    </div>
+  } @else if (container(); as c) {
+    <header class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <nav class="flex items-center gap-1.5 text-xs text-ink-tertiary font-mono">
+          <a routerLink="/containers" class="hover:text-ink transition-colors">
+            containers
+          </a>
+          <span>/</span>
+          <span class="text-ink-subtle truncate">{{ c.name }}</span>
+        </nav>
+        <a
+          routerLink="/containers"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-sm transition-colors"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="14"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Volver
+        </a>
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4 min-w-0">
+          <div class="flex flex-col gap-1 min-w-0">
+            <div class="flex items-center gap-3 min-w-0">
+              <h1
+                class="text-[26px] font-semibold tracking-[-0.5px] text-ink truncate"
+              >
+                {{ c.name }}
+              </h1>
+              <app-status-pill [state]="c.state.status" />
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+              <p class="text-xs font-mono text-ink-tertiary truncate">
+                {{ c.image }} · {{ shortId(c.id) }} · {{ uptime() }}
+              </p>
+              @if (c.state.running) {
+                @let s = currentStats();
+                <div class="inline-flex items-center gap-1.5 h-6 px-2 rounded bg-surface-2 border border-hairline">
+                  <span class="text-[9px] uppercase tracking-wide font-medium text-ink-tertiary">CPU</span>
+                  @if (s) {
+                    <span class="text-[11px] font-mono text-ink tabular-nums">{{ (s.cpuPercent ?? 0).toFixed(1) }}%</span>
+                  } @else {
+                    <span class="text-[11px] font-mono text-ink-tertiary tabular-nums">—</span>
+                  }
+                  <svg
+                    [attr.viewBox]="'0 0 ' + sparkSize.w + ' ' + sparkSize.h"
+                    [attr.width]="sparkSize.w"
+                    [attr.height]="sparkSize.h"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-primary"
+                  >
+                    <polyline [attr.points]="sparkPoints(cpuHistory())" />
+                  </svg>
+                </div>
+                <div class="inline-flex items-center gap-1.5 h-6 px-2 rounded bg-surface-2 border border-hairline">
+                  <span class="text-[9px] uppercase tracking-wide font-medium text-ink-tertiary">MEM</span>
+                  @if (s) {
+                    <span class="text-[11px] font-mono text-ink tabular-nums">{{ (s.memoryPercent ?? 0).toFixed(1) }}%</span>
+                    <span class="text-[10px] text-ink-tertiary tabular-nums">{{ formatBytes(s.memoryUsageBytes ?? 0) }}</span>
+                  } @else {
+                    <span class="text-[11px] font-mono text-ink-tertiary tabular-nums">—</span>
+                  }
+                  <svg
+                    [attr.viewBox]="'0 0 ' + sparkSize.w + ' ' + sparkSize.h"
+                    [attr.width]="sparkSize.w"
+                    [attr.height]="sparkSize.h"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-success"
+                  >
+                    <polyline [attr.points]="sparkPoints(memHistory())" />
+                  </svg>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          @if (!c.state.running) {
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-success/15 hover:bg-success/25 text-success text-sm font-medium transition-colors disabled:opacity-50"
+              [disabled]="actionPending()"
+              (click)="action('start')"
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <path d="M8 5v14l11-7Z" />
+              </svg>
+              Arrancar
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-warning/15 hover:bg-warning/25 text-warning text-sm font-medium transition-colors disabled:opacity-50"
+              [disabled]="actionPending()"
+              (click)="action('restart')"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+              Reiniciar
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-danger/15 hover:bg-danger/25 text-danger text-sm font-medium transition-colors disabled:opacity-50"
+              [disabled]="actionPending()"
+              (click)="action('stop')"
+            >
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                <rect x="4" y="4" width="16" height="16" rx="1" />
+              </svg>
+              Detener
+            </button>
+          }
+          <span class="w-px h-6 bg-hairline mx-1" aria-hidden="true"></span>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-transparent border border-danger/50 hover:bg-danger/10 text-danger text-sm font-medium transition-colors disabled:opacity-50"
+            [disabled]="actionPending()"
+            (click)="confirmDelete()"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 6h18" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <path d="M10 11v6M14 11v6" />
+            </svg>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <nav
+      class="flex items-end gap-1 border-b border-hairline mb-5 overflow-x-auto no-scrollbar"
+    >
+      @for (t of tabs; track t.id) {
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 h-11 px-4 -mb-px text-sm border-b-2 transition-colors shrink-0"
+          [class.border-primary]="tab() === t.id"
+          [class.text-ink]="tab() === t.id"
+          [class.font-medium]="tab() === t.id"
+          [class.border-transparent]="tab() !== t.id"
+          [class.text-ink-subtle]="tab() !== t.id"
+          [class.hover:text-ink]="tab() !== t.id"
+          (click)="tab.set(t.id)"
+        >
+          <span class="inline-flex items-center justify-center w-4 h-4">
+            @switch (t.id) {
+              @case ('general') {
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4l3 2" />
+                </svg>
+              }
+              @case ('terminal') {
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m4 17 6-6-6-6M12 19h8" />
+                </svg>
+              }
+              @case ('volumes') {
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="12" cy="6" rx="8" ry="3" />
+                  <path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6" />
+                  <path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
+                </svg>
+              }
+              @case ('network') {
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="5" cy="19" r="2" />
+                  <circle cx="19" cy="19" r="2" />
+                  <path d="M12 7v4M5 17l5-5M19 17l-5-5" />
+                </svg>
+              }
+              @case ('settings') {
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+                </svg>
+              }
+              @case ('logs') {
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6M9 13h6M9 17h4" />
+                </svg>
+              }
+            }
+          </span>
+          {{ t.label }}
+        </button>
+      }
+    </nav>
+
+    @switch (tab()) {
+      @case ('general') {
+        <section class="rounded-lg border border-hairline bg-surface-1">
+          <header
+            class="flex items-center justify-between px-5 py-4 border-b border-hairline"
+          >
+            <h2 class="text-[15px] font-medium text-ink">Container details</h2>
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-xs transition-colors"
+              (click)="reload()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                [class.animate-spin]="loading()"
+              >
+                <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+                <path d="M21 3v5h-5" />
+              </svg>
+              Refrescar
+            </button>
+          </header>
+
+          <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <app-info-cell label="Container ID" [value]="shortId(c.id)" mono />
+            <app-info-cell label="Image ID" [value]="shortId(c.imageId)" mono />
+            <app-info-cell
+              label="Created at"
+              [value]="formatDate(c.createdAt)"
+              mono
+            />
+
+            <app-info-cell label="IP address" [value]="primaryIp()" mono />
+            <app-info-cell label="Network" [value]="primaryNetwork()" mono truncate />
+            <app-info-cell
+              label="Restart policy"
+              [value]="c.hostConfig.restartPolicy || 'no'"
+              mono
+            />
+          </div>
+
+          <div class="border-t border-hairline">
+            <header class="px-5 py-3">
+              <h3 class="text-sm font-medium text-ink">Command</h3>
+            </header>
+            <p
+              class="px-5 pb-5 font-mono text-xs text-ink-muted break-all whitespace-pre-wrap"
+            >
+              {{ commandLine() || '—' }}
+            </p>
+          </div>
+
+          <div class="border-t border-hairline">
+            <header class="px-5 py-3">
+              <h3 class="text-sm font-medium text-ink">
+                Ports ({{ uniquePorts().length }})
+              </h3>
+            </header>
+            @if (!c.state.running && uniquePorts().length > 0) {
+              <p
+                class="mx-5 mb-3 px-3 py-2 rounded-md bg-surface-2 border border-hairline text-[11px] text-ink-muted flex items-start gap-2"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="shrink-0 mt-0.5"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" />
+                </svg>
+                Configuración persistida. El contenedor está parado, así que estos puertos no están escuchando en el host.
+              </p>
+            }
+            @if (uniquePorts().length === 0) {
+              <p class="px-5 pb-5 text-xs text-ink-subtle">Sin puertos publicados.</p>
+            } @else {
+              <ul class="px-5 pb-5 flex flex-wrap gap-2">
+                @for (p of uniquePorts(); track p.privatePort + '-' + (p.publicPort ?? '') + '-' + p.protocol) {
+                  @if (p.publicPort) {
+                    <li
+                      class="inline-flex items-center gap-2 h-9 px-3 rounded-md bg-surface-3 border border-hairline-strong text-sm font-mono"
+                      title="Puerto host {{ p.publicPort }} mapeado al puerto {{ p.privatePort }} del contenedor"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="13"
+                        height="13"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="text-ink-muted"
+                      >
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                      <span class="text-ink font-medium">{{ p.publicPort }}</span>
+                      <span class="text-ink-tertiary">→</span>
+                      <span class="text-ink">{{ p.privatePort }}/{{ p.protocol }}</span>
+                    </li>
+                  } @else {
+                    <li
+                      class="inline-flex items-center gap-2 h-9 px-3 rounded-md bg-surface-3 border border-hairline-strong text-sm font-mono"
+                      title="El contenedor escucha en {{ p.privatePort }}/{{ p.protocol }} pero no está publicado al host (solo accesible desde otras redes Docker)"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="13"
+                        height="13"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="text-ink-muted"
+                      >
+                        <rect x="4" y="11" width="16" height="10" rx="2" />
+                        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                      </svg>
+                      <span class="text-ink font-medium">
+                        {{ p.privatePort }}/{{ p.protocol }}
+                      </span>
+                      <span
+                        class="text-[10px] uppercase tracking-wide font-medium text-ink-muted px-1.5 py-0.5 rounded bg-surface-2"
+                      >
+                        interno
+                      </span>
+                    </li>
+                  }
+                }
+              </ul>
+            }
+          </div>
+        </section>
+      }
+
+      @case ('terminal') {
+        <section
+          class="rounded-lg border border-hairline bg-surface-1 px-6 py-12 text-center"
+        >
+          <div
+            class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-surface-2 text-ink-tertiary mb-4"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m4 17 6-6-6-6M12 19h8" />
+            </svg>
+          </div>
+          <h2 class="text-base font-medium text-ink mb-1">
+            Terminal no disponible
+          </h2>
+          <p class="text-sm text-ink-subtle max-w-sm mx-auto">
+            La sesión interactiva en el contenedor no está incluida en esta
+            versión de DockLite.
+          </p>
+        </section>
+      }
+
+      @case ('volumes') {
+        <section class="rounded-lg border border-hairline bg-surface-1">
+          <header
+            class="flex items-center justify-between px-5 py-4 border-b border-hairline"
+          >
+            <h2 class="text-[15px] font-medium text-ink">
+              Volúmenes ({{ c.mounts.length }})
+            </h2>
+            @if (!mountFormOpen()) {
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 h-9 px-3.5 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                [disabled]="!canEditMounts()"
+                [title]="addMountTooltip()"
+                (click)="openMountForm()"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Montar volumen
+              </button>
+            }
+          </header>
+
+          @if (mountsBlockedReason()) {
+            <div
+              class="px-5 py-3 bg-warning/10 border-b border-warning/30 text-xs text-warning flex items-start gap-2"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="shrink-0 mt-0.5"
+              >
+                <path d="M12 9v4M12 17h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.7 3h16.96a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z" />
+              </svg>
+              {{ mountsBlockedReason() }}
+            </div>
+          }
+
+          @if (mountFormOpen()) {
+            <div
+              class="px-5 py-4 border-b border-hairline bg-surface-2/40"
+            >
+              <h3 class="text-sm font-medium text-ink mb-3">Nuevo montaje</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 mb-3">
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-xs text-ink-muted">Volumen</label>
+                    <button
+                      type="button"
+                      class="text-xs text-ink-subtle hover:text-ink"
+                      (click)="toggleVolumeCreator()"
+                    >
+                      {{ creatingVolume() ? 'Cancelar' : '+ Crear volumen' }}
+                    </button>
+                  </div>
+                  <select
+                    [ngModel]="newMountVolume()"
+                    (ngModelChange)="newMountVolume.set($event)"
+                    class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  >
+                    <option value="" disabled>Elegir volumen</option>
+                    @for (v of availableVolumes(); track v.name) {
+                      <option [value]="v.name">{{ v.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs text-ink-muted mb-1.5">
+                    Ruta dentro del contenedor
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="/data"
+                    [ngModel]="newMountPath()"
+                    (ngModelChange)="newMountPath.set($event)"
+                    class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  />
+                </div>
+                <div class="flex items-end">
+                  <label
+                    class="inline-flex items-center gap-1.5 h-10 px-2.5 rounded border cursor-pointer text-xs select-none transition-colors
+                           border-dashed border-hairline-strong bg-canvas text-ink-tertiary hover:text-ink-muted
+                           has-[:checked]:border-solid has-[:checked]:border-warning/50 has-[:checked]:bg-warning/15 has-[:checked]:text-warning has-[:checked]:font-medium"
+                  >
+                    <input
+                      type="checkbox"
+                      [ngModel]="newMountReadOnly()"
+                      (ngModelChange)="newMountReadOnly.set($event)"
+                      class="sr-only"
+                    />
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="12"
+                      height="12"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <rect x="4" y="11" width="16" height="10" rx="2" />
+                      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                    </svg>
+                    Solo lectura
+                  </label>
+                </div>
+              </div>
+
+              @if (creatingVolume()) {
+                <div
+                  class="flex items-center gap-2 mb-3 p-2 rounded-md bg-surface-1 border border-hairline"
+                >
+                  <input
+                    type="text"
+                    placeholder="Nombre del volumen"
+                    [ngModel]="newVolumeName()"
+                    (ngModelChange)="newVolumeName.set($event)"
+                    (keydown.enter)="createVolume(); $event.preventDefault()"
+                    class="flex-1 h-9 px-2 rounded bg-surface-2 border border-hairline outline-none text-sm font-mono text-ink"
+                  />
+                  <button
+                    type="button"
+                    class="h-9 px-3 rounded bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium disabled:opacity-50"
+                    [disabled]="!newVolumeName().trim()"
+                    (click)="createVolume()"
+                  >
+                    Crear
+                  </button>
+                </div>
+                @if (volumeCreateError()) {
+                  <p class="text-xs text-danger mb-2">{{ volumeCreateError() }}</p>
+                }
+              }
+
+              @if (mountError()) {
+                <p
+                  class="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 mb-3 text-xs text-danger"
+                  role="alert"
+                >
+                  {{ mountError() }}
+                </p>
+              }
+
+              <div class="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  class="h-9 px-4 rounded-md border border-danger/40 text-danger hover:bg-danger/10 text-sm font-medium"
+                  [disabled]="mountSaving()"
+                  (click)="closeMountForm()"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  class="h-9 px-4 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary text-sm font-medium"
+                  [disabled]="mountSaving() || !newMountVolume() || !newMountPath()"
+                  (click)="addMount()"
+                >
+                  {{ mountSaving() ? 'Aplicando…' : 'Aplicar y recrear' }}
+                </button>
+              </div>
+            </div>
+          }
+          @if (c.mounts.length === 0) {
+            <p class="px-5 py-8 text-sm text-center text-ink-subtle">
+              Este contenedor no tiene volúmenes montados.
+            </p>
+          } @else {
+            <div
+              class="hidden md:grid grid-cols-[100px_1fr_1fr_180px_96px] gap-4 px-5 py-3 bg-surface-2 border-b border-hairline text-[11px] font-medium tracking-[0.6px] uppercase text-ink-muted"
+            >
+              <span>Tipo</span>
+              <span>Origen (host)</span>
+              <span>Destino (contenedor)</span>
+              <span>Permisos</span>
+              <span class="text-right">Acciones</span>
+            </div>
+            <ul class="divide-y divide-hairline-tertiary">
+              @for (m of c.mounts; track m.source + m.destination; let i = $index) {
+                <li
+                  class="grid grid-cols-1 md:grid-cols-[100px_1fr_1fr_180px_96px] gap-x-4 gap-y-3 px-5 py-4 items-center text-sm"
+                >
+                  <div class="flex items-center">
+                    <span
+                      class="inline-flex items-center px-2.5 py-1 rounded-pill text-[10px] tracking-[0.4px] font-medium uppercase border border-hairline-strong text-ink-muted"
+                    >
+                      {{ m.type }}
+                    </span>
+                  </div>
+
+                  <div class="flex flex-col gap-0.5 min-w-0">
+                    <span class="md:hidden text-[10px] uppercase tracking-wide text-ink-tertiary">
+                      Origen
+                    </span>
+                    <span class="font-mono text-[13px] text-ink-muted break-all">
+                      {{ m.source }}
+                    </span>
+                  </div>
+
+                  <div class="flex flex-col gap-0.5 min-w-0">
+                    <span class="md:hidden text-[10px] uppercase tracking-wide text-ink-tertiary">
+                      Destino
+                    </span>
+                    @if (editingMountIndex() === i) {
+                      <input
+                        type="text"
+                        [ngModel]="editMountPath()"
+                        (ngModelChange)="editMountPath.set($event)"
+                        class="w-full h-8 px-2 rounded bg-surface-2 border border-primary-focus outline-none text-[13px] font-mono text-ink"
+                      />
+                    } @else {
+                      <span class="font-mono text-[13px] text-ink break-all">
+                        {{ m.destination }}
+                      </span>
+                    }
+                  </div>
+
+                  <div class="flex md:justify-start">
+                    @if (editingMountIndex() === i) {
+                      <label
+                        class="inline-flex items-center gap-1.5 h-8 px-2.5 rounded border cursor-pointer text-xs select-none transition-colors
+                               border-dashed border-hairline-strong bg-canvas text-ink-tertiary hover:text-ink-muted
+                               has-[:checked]:border-solid has-[:checked]:border-warning/50 has-[:checked]:bg-warning/15 has-[:checked]:text-warning has-[:checked]:font-medium"
+                      >
+                        <input
+                          type="checkbox"
+                          [ngModel]="editMountReadOnly()"
+                          (ngModelChange)="editMountReadOnly.set($event)"
+                          class="sr-only"
+                        />
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="12"
+                          height="12"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <rect x="4" y="11" width="16" height="10" rx="2" />
+                          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                        </svg>
+                        Solo lectura
+                      </label>
+                    } @else if (m.rw) {
+                      <span
+                        class="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-success/15 border border-success/30 text-success text-xs font-medium"
+                        title="Lectura y escritura — el contenedor puede modificar los datos"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                        Lectura/escritura
+                      </span>
+                    } @else {
+                      <span
+                        class="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-warning/15 border border-warning/30 text-warning text-xs font-medium"
+                        title="Solo lectura — el contenedor no puede modificar los datos"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <rect x="4" y="11" width="16" height="10" rx="2" />
+                          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                        </svg>
+                        Solo lectura
+                      </span>
+                    }
+                  </div>
+
+                  <div class="flex items-center gap-1 md:justify-end">
+                    @if (editingMountIndex() === i) {
+                      <button
+                        type="button"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded bg-success/20 hover:bg-success/30 text-success transition-colors disabled:opacity-50"
+                        [disabled]="mountSaving()"
+                        title="Guardar cambios"
+                        (click)="saveEditMount()"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="m5 12 5 5L20 7" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink transition-colors"
+                        [disabled]="mountSaving()"
+                        title="Cancelar"
+                        (click)="cancelEditMount()"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M18 6 6 18M6 6l12 12" />
+                        </svg>
+                      </button>
+                    } @else if (canEditMounts() && m.type === 'volume') {
+                      <button
+                        type="button"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded bg-primary/15 hover:bg-primary/25 text-primary transition-colors disabled:opacity-50"
+                        [disabled]="mountSaving() || editingMountIndex() !== null"
+                        title="Editar volumen (recreará el contenedor)"
+                        (click)="startEditMount(i, m)"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-50"
+                        [disabled]="mountSaving() || editingMountIndex() !== null"
+                        title="Quitar volumen (recreará el contenedor)"
+                        (click)="confirmRemoveMount(m)"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="14"
+                          height="14"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          <path d="M10 11v6M14 11v6" />
+                        </svg>
+                      </button>
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+
+      @case ('network') {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <section class="rounded-lg border border-hairline bg-surface-1">
+            <header
+              class="flex items-center justify-between px-5 py-4 border-b border-hairline"
+            >
+              <h2 class="text-[15px] font-medium text-ink">
+                Redes ({{ c.networks.length }})
+              </h2>
+              @if (!networkFormOpen()) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 h-9 px-3.5 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium transition-colors disabled:opacity-50"
+                  [disabled]="networkSaving()"
+                  (click)="openNetworkForm()"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Conectar a red
+                </button>
+              }
+            </header>
+
+            @if (networkFormOpen()) {
+              <div class="px-5 py-4 border-b border-hairline bg-surface-2/40">
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="text-xs text-ink-muted">Red</label>
+                  <button
+                    type="button"
+                    class="text-xs text-ink-subtle hover:text-ink"
+                    (click)="toggleNetworkCreator()"
+                  >
+                    {{ creatingNetwork() ? 'Cancelar' : '+ Crear red' }}
+                  </button>
+                </div>
+                <div class="flex items-center gap-3 mb-3">
+                  <select
+                    [ngModel]="newNetworkId()"
+                    (ngModelChange)="newNetworkId.set($event)"
+                    class="flex-1 h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  >
+                    <option value="" disabled>Elegir red</option>
+                    @for (net of availableNetworksToConnect(); track net.id) {
+                      <option [value]="net.id">{{ net.name }} · {{ net.driver }}</option>
+                    }
+                  </select>
+                </div>
+
+                @if (creatingNetwork()) {
+                  <div
+                    class="flex items-center gap-2 mb-3 p-2 rounded-md bg-surface-1 border border-hairline"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Nombre de la red"
+                      [ngModel]="newNetworkName()"
+                      (ngModelChange)="newNetworkName.set($event)"
+                      (keydown.enter)="createNetwork(); $event.preventDefault()"
+                      class="flex-1 h-9 px-2 rounded bg-surface-2 border border-hairline outline-none text-sm font-mono text-ink"
+                    />
+                    <button
+                      type="button"
+                      class="h-9 px-3 rounded bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium disabled:opacity-50"
+                      [disabled]="!newNetworkName().trim()"
+                      (click)="createNetwork()"
+                    >
+                      Crear
+                    </button>
+                  </div>
+                  @if (networkCreateError()) {
+                    <p class="text-xs text-danger mb-2">{{ networkCreateError() }}</p>
+                  }
+                }
+
+                @if (networkError()) {
+                  <p
+                    class="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 mb-3 text-xs text-danger"
+                  >
+                    {{ networkError() }}
+                  </p>
+                }
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md border border-danger/40 text-danger hover:bg-danger/10 text-sm font-medium"
+                    [disabled]="networkSaving()"
+                    (click)="closeNetworkForm()"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary text-sm font-medium"
+                    [disabled]="networkSaving() || !newNetworkId()"
+                    (click)="connectNetwork()"
+                  >
+                    {{ networkSaving() ? 'Conectando…' : 'Conectar' }}
+                  </button>
+                </div>
+              </div>
+            }
+
+            @if (c.networks.length === 0) {
+              <p class="px-5 py-8 text-sm text-center text-ink-subtle">
+                Sin redes conectadas.
+              </p>
+            } @else {
+              <ul class="divide-y divide-hairline-tertiary">
+                @for (net of c.networks; track net.name) {
+                  <li class="flex items-start justify-between gap-3 px-5 py-3">
+                    <div class="flex-1 min-w-0">
+                      <p class="font-mono text-sm text-ink mb-1.5">{{ net.name }}</p>
+                      <div class="grid grid-cols-3 gap-x-3 gap-y-1 text-xs">
+                        <span class="text-ink-tertiary">IP</span>
+                        <span class="col-span-2 font-mono text-ink-muted">
+                          {{ net.ipAddress || '—' }}
+                        </span>
+                        <span class="text-ink-tertiary">Gateway</span>
+                        <span class="col-span-2 font-mono text-ink-muted">
+                          {{ net.gateway || '—' }}
+                        </span>
+                        <span class="text-ink-tertiary">MAC</span>
+                        <span class="col-span-2 font-mono text-ink-muted">
+                          {{ net.macAddress || '—' }}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center w-8 h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-50 shrink-0"
+                      [disabled]="networkSaving()"
+                      title="Desconectar de esta red"
+                      (click)="confirmDisconnectNetwork(net.name)"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <path d="M10 11v6M14 11v6" />
+                      </svg>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          <section class="rounded-lg border border-hairline bg-surface-1">
+            <header
+              class="flex items-center justify-between px-5 py-4 border-b border-hairline"
+            >
+              <h2 class="text-[15px] font-medium text-ink">
+                Puertos ({{ uniquePorts().length }})
+              </h2>
+              @if (!portFormOpen()) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-2 h-9 px-3.5 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  [disabled]="!canEditPorts()"
+                  [title]="addPortTooltip()"
+                  (click)="openPortForm()"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Publicar puerto
+                </button>
+              }
+            </header>
+
+            @if (portsBlockedReason()) {
+              <div
+                class="px-5 py-3 bg-warning/10 border-b border-warning/30 text-xs text-warning flex items-start gap-2"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="shrink-0 mt-0.5"
+                >
+                  <path d="M12 9v4M12 17h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.7 3h16.96a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z" />
+                </svg>
+                {{ portsBlockedReason() }}
+              </div>
+            }
+
+            @if (portFormOpen()) {
+              <div class="px-5 py-4 border-b border-hairline bg-surface-2/40">
+                <h3 class="text-sm font-medium text-ink mb-3">Nuevo puerto</h3>
+
+                @if (!useCustomContainerPort() && detectedContainerPorts().length > 0) {
+                  <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr] gap-3 mb-3">
+                    <div>
+                      <label class="block text-xs text-ink-muted mb-1.5">Host</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="65535"
+                        placeholder="8080"
+                        [ngModel]="newPortHost()"
+                        (ngModelChange)="newPortHost.set($event)"
+                        class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs text-ink-muted mb-1.5">
+                        Contenedor (detectado de la imagen)
+                      </label>
+                      <select
+                        [ngModel]="currentDetectedKey()"
+                        (ngModelChange)="onDetectedPortChange($event)"
+                        class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                      >
+                        @for (p of detectedContainerPorts(); track p.label) {
+                          <option [value]="p.label">{{ p.label }}</option>
+                        }
+                        <option value="__custom__">Otro…</option>
+                      </select>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_120px] gap-3 mb-3">
+                    <div>
+                      <label class="block text-xs text-ink-muted mb-1.5">Host</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="65535"
+                        placeholder="8080"
+                        [ngModel]="newPortHost()"
+                        (ngModelChange)="newPortHost.set($event)"
+                        class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                      />
+                    </div>
+                    <div>
+                      <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs text-ink-muted">Contenedor</label>
+                        @if (detectedContainerPorts().length > 0) {
+                          <button
+                            type="button"
+                            class="text-xs text-ink-subtle hover:text-ink"
+                            (click)="useCustomContainerPort.set(false)"
+                          >
+                            Usar detectado
+                          </button>
+                        }
+                      </div>
+                      <input
+                        type="number"
+                        min="1"
+                        max="65535"
+                        placeholder="80"
+                        [ngModel]="newPortContainer()"
+                        (ngModelChange)="newPortContainer.set($event)"
+                        class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs text-ink-muted mb-1.5">
+                        Protocolo
+                      </label>
+                      <select
+                        [ngModel]="newPortProtocol()"
+                        (ngModelChange)="newPortProtocol.set($event)"
+                        class="w-full h-10 px-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                      >
+                        <option value="tcp">tcp</option>
+                        <option value="udp">udp</option>
+                      </select>
+                    </div>
+                  </div>
+                }
+
+                @if (newPortConflict(); as blocker) {
+                  <p
+                    class="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 mb-3 text-xs text-danger"
+                  >
+                    Puerto {{ newPortHost() }} ya en uso por
+                    <span class="font-mono">{{ blocker }}</span>.
+                  </p>
+                }
+                @if (portError()) {
+                  <p
+                    class="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 mb-3 text-xs text-danger"
+                    role="alert"
+                  >
+                    {{ portError() }}
+                  </p>
+                }
+
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md border border-danger/40 text-danger hover:bg-danger/10 text-sm font-medium"
+                    [disabled]="portSaving()"
+                    (click)="closePortForm()"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary text-sm font-medium"
+                    [disabled]="portSaving() || !newPortHost() || !newPortContainer() || !!newPortConflict()"
+                    (click)="addPort()"
+                  >
+                    {{ portSaving() ? 'Aplicando…' : 'Aplicar y recrear' }}
+                  </button>
+                </div>
+              </div>
+            }
+
+            @if (!c.state.running && uniquePorts().length > 0) {
+              <p
+                class="mx-5 mt-4 px-3 py-2 rounded-md bg-surface-2 border border-hairline text-[11px] text-ink-muted flex items-start gap-2"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="shrink-0 mt-0.5"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" />
+                </svg>
+                Configuración persistida. El contenedor está parado, así que estos puertos no están escuchando en el host.
+              </p>
+            }
+            @if (uniquePorts().length === 0) {
+              <p class="px-5 py-8 text-sm text-center text-ink-subtle">
+                Sin puertos publicados.
+              </p>
+            } @else {
+              <ul class="px-5 py-4 flex flex-wrap gap-2">
+                @for (p of uniquePorts(); track p.privatePort + '-' + (p.publicPort ?? '') + '-' + p.protocol) {
+                  @if (p.publicPort) {
+                    @if (editingPortKey() === portKey(p)) {
+                      <li
+                        class="inline-flex items-center gap-1.5 h-9 pl-1.5 pr-1.5 rounded-md bg-surface-3 border border-primary-focus text-sm font-mono"
+                      >
+                        <input
+                          type="number"
+                          min="1"
+                          max="65535"
+                          [ngModel]="editPortHost()"
+                          (ngModelChange)="editPortHost.set($event)"
+                          class="w-20 h-7 px-2 rounded bg-surface-1 border border-hairline outline-none text-sm font-mono text-ink"
+                        />
+                        <span class="text-ink-tertiary">→</span>
+                        <span class="text-ink">{{ p.privatePort }}</span>
+                        <span class="text-ink-tertiary">/</span>
+                        <select
+                          [ngModel]="editPortProtocol()"
+                          (ngModelChange)="editPortProtocol.set($event)"
+                          class="h-7 px-1.5 rounded bg-surface-1 border border-hairline outline-none text-sm font-mono text-ink"
+                        >
+                          <option value="tcp">tcp</option>
+                          <option value="udp">udp</option>
+                        </select>
+                        <button
+                          type="button"
+                          class="inline-flex items-center justify-center w-7 h-7 rounded bg-success/20 hover:bg-success/30 text-success disabled:opacity-50"
+                          [disabled]="portSaving() || !!editPortConflict()"
+                          [title]="editPortConflict() ? ('Puerto ya en uso por ' + editPortConflict()) : 'Guardar'"
+                          (click)="saveEditPort(p)"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="13"
+                            height="13"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="m5 12 5 5L20 7" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          class="inline-flex items-center justify-center w-7 h-7 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink"
+                          [disabled]="portSaving()"
+                          title="Cancelar"
+                          (click)="cancelEditPort()"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="13"
+                            height="13"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M18 6 6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </li>
+                    } @else {
+                      <li
+                        class="inline-flex items-center gap-2 h-9 pl-3 pr-1.5 rounded-md bg-surface-3 border border-hairline-strong text-sm font-mono"
+                        title="Puerto host {{ p.publicPort }} mapeado al puerto {{ p.privatePort }} del contenedor"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="13"
+                          height="13"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          class="text-ink-muted"
+                        >
+                          <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                        <span class="text-ink font-medium">{{ p.publicPort }}</span>
+                        <span class="text-ink-tertiary">→</span>
+                        <span class="text-ink">{{ p.privatePort }}/{{ p.protocol }}</span>
+                        @if (canEditPorts()) {
+                          <button
+                            type="button"
+                            class="inline-flex items-center justify-center w-7 h-7 rounded text-primary hover:opacity-70 transition-opacity disabled:opacity-50"
+                            [disabled]="portSaving() || editingPortKey() !== null"
+                            title="Editar este mapeo"
+                            (click)="startEditPort(p)"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="14"
+                              height="14"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            class="inline-flex items-center justify-center w-7 h-7 rounded text-danger hover:opacity-70 transition-opacity disabled:opacity-50"
+                            [disabled]="portSaving() || editingPortKey() !== null"
+                            title="Quitar este mapeo"
+                            (click)="confirmRemovePort(p)"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="14"
+                              height="14"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2.4"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <path d="M18 6 6 18M6 6l12 12" />
+                            </svg>
+                          </button>
+                        }
+                      </li>
+                    }
+                  } @else {
+                    <li
+                      class="inline-flex items-center gap-2 h-9 px-3 rounded-md bg-surface-3 border border-hairline-strong text-sm font-mono"
+                      title="El contenedor escucha en {{ p.privatePort }}/{{ p.protocol }} pero no está publicado al host (solo accesible desde otras redes Docker)"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="13"
+                        height="13"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="text-ink-muted"
+                      >
+                        <rect x="4" y="11" width="16" height="10" rx="2" />
+                        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                      </svg>
+                      <span class="text-ink font-medium">
+                        {{ p.privatePort }}/{{ p.protocol }}
+                      </span>
+                      <span
+                        class="text-[10px] uppercase tracking-wide font-medium text-ink-muted px-1.5 py-0.5 rounded bg-surface-2"
+                      >
+                        interno
+                      </span>
+                    </li>
+                  }
+                }
+              </ul>
+            }
+          </section>
+        </div>
+      }
+
+      @case ('settings') {
+        <div class="space-y-5">
+          @if (c.state.running) {
+            <div
+              class="rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-xs text-warning flex items-start gap-2"
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
+                <path d="M12 9v4M12 17h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.7 3h16.96a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z" />
+              </svg>
+              Memoria, CPU y nombre se editan en caliente. Para tocar
+              variables de entorno, comando, healthcheck o política de
+              reinicio hay que parar el contenedor (recrea el contenedor).
+            </div>
+          }
+
+          <!-- ─── Identidad ─── -->
+          <section class="rounded-lg border border-hairline bg-surface-1">
+            <header class="flex items-center justify-between px-5 py-4 border-b border-hairline">
+              <h2 class="text-[15px] font-medium text-ink">Identidad</h2>
+              @if (!renameOpen()) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-xs transition-colors"
+                  (click)="openRename()"
+                >
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Renombrar
+                </button>
+              }
+            </header>
+            @if (!renameOpen()) {
+              <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <app-info-cell label="Nombre" [value]="c.name" mono />
+                <app-info-cell label="ID" [value]="shortId(c.id)" mono />
+              </div>
+            } @else {
+              <div class="p-5 flex items-end gap-3">
+                <div class="flex-1">
+                  <label class="block text-xs text-ink-muted mb-1.5">Nombre</label>
+                  <input
+                    type="text"
+                    [ngModel]="renameValue()"
+                    (ngModelChange)="renameValue.set($event)"
+                    (keydown.enter)="saveRename(); $event.preventDefault()"
+                    class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="h-10 px-4 rounded-md border border-danger/40 text-danger hover:bg-danger/10 text-sm font-medium"
+                  [disabled]="renameSaving()"
+                  (click)="closeRename()"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  class="h-10 px-4 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium disabled:opacity-50"
+                  [disabled]="renameSaving() || !renameValue().trim()"
+                  (click)="saveRename()"
+                >
+                  {{ renameSaving() ? 'Guardando…' : 'Guardar' }}
+                </button>
+              </div>
+            }
+          </section>
+
+          <!-- ─── Recursos ─── -->
+          <section class="rounded-lg border border-hairline bg-surface-1">
+            <header class="flex items-center justify-between px-5 py-4 border-b border-hairline">
+              <h2 class="text-[15px] font-medium text-ink">Recursos</h2>
+              @if (!resourcesEditing()) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-xs transition-colors"
+                  (click)="openResourcesEditor()"
+                >
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Editar
+                </button>
+              }
+            </header>
+            @if (!resourcesEditing()) {
+              <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <app-info-cell label="Memoria" [value]="formatBytes(c.hostConfig.memoryLimitBytes)" mono />
+                <app-info-cell label="CPUs" [value]="formatCpus(c.hostConfig.nanoCpus)" mono />
+                <app-info-cell label="Restart policy" [value]="c.hostConfig.restartPolicy || 'no'" mono />
+              </div>
+            } @else {
+              <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs text-ink-muted mb-1.5">Memoria (MiB)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="sin límite"
+                    [ngModel]="resMemoryMb()"
+                    (ngModelChange)="resMemoryMb.set($event)"
+                    class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs text-ink-muted mb-1.5">CPUs</label>
+                  <input
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    placeholder="sin límite"
+                    [ngModel]="resCpus()"
+                    (ngModelChange)="resCpus.set($event)"
+                    class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs text-ink-muted mb-1.5">Restart policy</label>
+                  <select
+                    [ngModel]="resRestartPolicy()"
+                    (ngModelChange)="resRestartPolicy.set($event)"
+                    class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  >
+                    <option value="no">no</option>
+                    <option value="always">always</option>
+                    <option value="on-failure">on-failure</option>
+                    <option value="unless-stopped">unless-stopped</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-3 flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md border border-danger/40 text-danger hover:bg-danger/10 text-sm font-medium"
+                    [disabled]="resourcesSaving()"
+                    (click)="closeResourcesEditor()"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium disabled:opacity-50"
+                    [disabled]="resourcesSaving()"
+                    (click)="saveResources()"
+                  >
+                    {{ resourcesSaving() ? 'Guardando…' : 'Aplicar' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </section>
+
+          <!-- ─── Variables de entorno ─── -->
+          <section class="rounded-lg border border-hairline bg-surface-1">
+            <header class="flex items-center justify-between px-5 py-4 border-b border-hairline">
+              <h2 class="text-[15px] font-medium text-ink">
+                Variables de entorno ({{ c.config.env.length }})
+              </h2>
+              @if (!envEditing()) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  [disabled]="!canEditEnv()"
+                  [title]="canEditEnv() ? 'Editar' : 'Detén el contenedor primero'"
+                  (click)="openEnvEditor()"
+                >
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Editar
+                </button>
+              }
+            </header>
+            @if (!envEditing()) {
+              @if (c.config.env.length === 0) {
+                <p class="px-5 py-8 text-sm text-center text-ink-subtle">
+                  Sin variables de entorno.
+                </p>
+              } @else {
+                <ul class="divide-y divide-hairline-tertiary">
+                  @for (e of c.config.env; track e) {
+                    <li class="px-5 py-2 text-xs font-mono break-all">
+                      <span class="text-primary">{{ envName(e) }}</span>
+                      <span class="text-ink-tertiary">=</span>
+                      <span class="text-ink-muted">{{ envValue(e) }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            } @else {
+              <div class="p-5 space-y-2">
+                @for (row of envRows(); track $index; let i = $index) {
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="NAME"
+                      [ngModel]="row.name"
+                      (ngModelChange)="updateEnvRow(i, { name: $event })"
+                      class="w-44 h-9 px-2 rounded bg-surface-2 border border-hairline outline-none text-sm font-mono text-primary"
+                    />
+                    <span class="text-ink-tertiary">=</span>
+                    <input
+                      type="text"
+                      placeholder="value"
+                      [ngModel]="row.value"
+                      (ngModelChange)="updateEnvRow(i, { value: $event })"
+                      class="flex-1 h-9 px-2 rounded bg-surface-2 border border-hairline outline-none text-sm font-mono text-ink"
+                    />
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center w-8 h-8 rounded text-ink-tertiary hover:text-danger transition-colors"
+                      title="Quitar"
+                      (click)="removeEnvRow(i)"
+                    >
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                      </svg>
+                    </button>
+                  </div>
+                }
+                <button
+                  type="button"
+                  class="text-xs text-primary hover:text-primary-hover"
+                  (click)="addEnvRow()"
+                >
+                  + Añadir variable
+                </button>
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-hairline">
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md border border-danger/40 text-danger hover:bg-danger/10 text-sm font-medium"
+                    [disabled]="envSaving()"
+                    (click)="closeEnvEditor()"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium disabled:opacity-50"
+                    [disabled]="envSaving()"
+                    (click)="saveEnv()"
+                  >
+                    {{ envSaving() ? 'Aplicando…' : 'Aplicar y recrear' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </section>
+
+          <!-- ─── Comando / entrypoint ─── -->
+          <section class="rounded-lg border border-hairline bg-surface-1">
+            <header class="flex items-center justify-between px-5 py-4 border-b border-hairline">
+              <h2 class="text-[15px] font-medium text-ink">Comando</h2>
+              @if (!commandEditing()) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  [disabled]="!canEditEnv()"
+                  [title]="canEditEnv() ? 'Editar' : 'Detén el contenedor primero'"
+                  (click)="openCommandEditor()"
+                >
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Editar
+                </button>
+              }
+            </header>
+            @if (!commandEditing()) {
+              <dl class="p-5 grid grid-cols-3 gap-y-2 gap-x-3 text-xs">
+                <dt class="text-ink-tertiary">Entrypoint</dt>
+                <dd class="col-span-2 font-mono text-ink-muted break-all">
+                  {{ (c.config.entrypoint || []).join(' ') || '—' }}
+                </dd>
+                <dt class="text-ink-tertiary">Command</dt>
+                <dd class="col-span-2 font-mono text-ink-muted break-all">
+                  {{ (c.config.command || []).join(' ') || '—' }}
+                </dd>
+              </dl>
+            } @else {
+              <div class="p-5 space-y-3">
+                <div>
+                  <label class="block text-xs text-ink-muted mb-1.5">Entrypoint (vacío = usar el de la imagen)</label>
+                  <input
+                    type="text"
+                    [ngModel]="cmdEntrypoint()"
+                    (ngModelChange)="cmdEntrypoint.set($event)"
+                    placeholder="/docker-entrypoint.sh"
+                    class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs text-ink-muted mb-1.5">Command (vacío = usar el de la imagen)</label>
+                  <input
+                    type="text"
+                    [ngModel]="cmdCommand()"
+                    (ngModelChange)="cmdCommand.set($event)"
+                    placeholder="nginx -g 'daemon off;'"
+                    class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                  />
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md border border-danger/40 text-danger hover:bg-danger/10 text-sm font-medium"
+                    [disabled]="commandSaving()"
+                    (click)="closeCommandEditor()"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium disabled:opacity-50"
+                    [disabled]="commandSaving()"
+                    (click)="saveCommand()"
+                  >
+                    {{ commandSaving() ? 'Aplicando…' : 'Aplicar y recrear' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </section>
+
+          <!-- ─── Healthcheck ─── -->
+          <section class="rounded-lg border border-hairline bg-surface-1">
+            <header class="flex items-center justify-between px-5 py-4 border-b border-hairline">
+              <h2 class="text-[15px] font-medium text-ink">Healthcheck</h2>
+              @if (!hcEditing()) {
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  [disabled]="!canEditEnv()"
+                  [title]="canEditEnv() ? 'Editar' : 'Detén el contenedor primero'"
+                  (click)="openHealthcheckEditor()"
+                >
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  Editar
+                </button>
+              }
+            </header>
+            @if (!hcEditing()) {
+              @if (!c.healthcheck || (c.healthcheck.test.length === 1 && c.healthcheck.test[0] === 'NONE')) {
+                <p class="px-5 py-8 text-sm text-center text-ink-subtle">
+                  Sin healthcheck configurado.
+                </p>
+              } @else {
+                <dl class="p-5 grid grid-cols-3 gap-y-2 gap-x-3 text-xs">
+                  <dt class="text-ink-tertiary">Test</dt>
+                  <dd class="col-span-2 font-mono text-ink-muted break-all">{{ c.healthcheck.test.join(' ') }}</dd>
+                  <dt class="text-ink-tertiary">Interval</dt>
+                  <dd class="col-span-2 font-mono text-ink-muted">{{ formatDuration(c.healthcheck.intervalNanos) }}</dd>
+                  <dt class="text-ink-tertiary">Timeout</dt>
+                  <dd class="col-span-2 font-mono text-ink-muted">{{ formatDuration(c.healthcheck.timeoutNanos) }}</dd>
+                  <dt class="text-ink-tertiary">Retries</dt>
+                  <dd class="col-span-2 font-mono text-ink-muted tabular-nums">{{ c.healthcheck.retries }}</dd>
+                  <dt class="text-ink-tertiary">Start period</dt>
+                  <dd class="col-span-2 font-mono text-ink-muted">{{ formatDuration(c.healthcheck.startPeriodNanos) }}</dd>
+                </dl>
+              }
+            } @else {
+              <div class="p-5 space-y-3">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [ngModel]="hcEnabled()"
+                    (ngModelChange)="hcEnabled.set($event)"
+                    class="h-4 w-4 rounded border-hairline accent-primary"
+                  />
+                  <span class="text-sm text-ink">Habilitado</span>
+                </label>
+                @if (hcEnabled()) {
+                  <div>
+                    <label class="block text-xs text-ink-muted mb-1.5">Test</label>
+                    <input
+                      type="text"
+                      [ngModel]="hcTest()"
+                      (ngModelChange)="hcTest.set($event)"
+                      placeholder="CMD-SHELL curl -f http://localhost/ || exit 1"
+                      class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm font-mono text-ink"
+                    />
+                  </div>
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label class="block text-xs text-ink-muted mb-1.5">Interval (s)</label>
+                      <input type="number" min="1" [ngModel]="hcInterval()" (ngModelChange)="hcInterval.set($event)" class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline outline-none text-sm font-mono text-ink" />
+                    </div>
+                    <div>
+                      <label class="block text-xs text-ink-muted mb-1.5">Timeout (s)</label>
+                      <input type="number" min="1" [ngModel]="hcTimeout()" (ngModelChange)="hcTimeout.set($event)" class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline outline-none text-sm font-mono text-ink" />
+                    </div>
+                    <div>
+                      <label class="block text-xs text-ink-muted mb-1.5">Retries</label>
+                      <input type="number" min="0" [ngModel]="hcRetries()" (ngModelChange)="hcRetries.set($event)" class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline outline-none text-sm font-mono text-ink" />
+                    </div>
+                    <div>
+                      <label class="block text-xs text-ink-muted mb-1.5">Start period (s)</label>
+                      <input type="number" min="0" [ngModel]="hcStartPeriod()" (ngModelChange)="hcStartPeriod.set($event)" class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline outline-none text-sm font-mono text-ink" />
+                    </div>
+                  </div>
+                }
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-hairline">
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md border border-danger/40 text-danger hover:bg-danger/10 text-sm font-medium"
+                    [disabled]="hcSaving()"
+                    (click)="closeHealthcheckEditor()"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    class="h-9 px-4 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium disabled:opacity-50"
+                    [disabled]="hcSaving()"
+                    (click)="saveHealthcheck()"
+                  >
+                    {{ hcSaving() ? 'Aplicando…' : 'Aplicar y recrear' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </section>
+        </div>
+      }
+
+      @case ('logs') {
+        <section class="rounded-lg border border-hairline bg-surface-1 overflow-hidden">
+          <header
+            class="flex items-center justify-between px-5 py-3 border-b border-hairline gap-3"
+          >
+            <h2 class="text-[15px] font-medium text-ink">Logs</h2>
+            <div class="flex items-center gap-2">
+              <label class="text-xs text-ink-tertiary">Tail</label>
+              <select
+                [value]="tail()"
+                (change)="onTailChange($event)"
+                class="h-8 px-2 rounded bg-surface-2 border border-hairline text-xs text-ink"
+              >
+                <option [value]="50">50</option>
+                <option [value]="200">200</option>
+                <option [value]="500">500</option>
+                <option [value]="1000">1000</option>
+              </select>
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 h-8 px-3 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-xs transition-colors disabled:opacity-50"
+                [disabled]="!logs() || logsLoading()"
+                [title]="logsCopied() ? 'Copiado' : 'Copiar las líneas mostradas'"
+                (click)="copyLogs()"
+              >
+                @if (logsCopied()) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-success"
+                  >
+                    <path d="m5 12 5 5L20 7" />
+                  </svg>
+                  Copiado
+                } @else {
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <rect x="9" y="9" width="13" height="13" rx="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copiar
+                }
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 h-8 px-3 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink text-xs transition-colors disabled:opacity-50"
+                [disabled]="logsLoading()"
+                (click)="reloadLogs()"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="12"
+                  height="12"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  [class.animate-spin]="logsLoading()"
+                >
+                  <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+                  <path d="M21 3v5h-5" />
+                </svg>
+                Refrescar
+              </button>
+            </div>
+          </header>
+          <div class="bg-canvas">
+            @if (logsLoading() && !logs()) {
+              <div class="px-5 py-6 text-sm text-ink-subtle">Cargando logs…</div>
+            } @else if (!logs()) {
+              <div class="px-5 py-6 text-sm text-ink-subtle">Sin logs.</div>
+            } @else {
+              <pre
+                #logsPane
+                class="px-5 py-4 max-h-[60vh] overflow-auto text-[12px] leading-[1.55] font-mono text-ink whitespace-pre-wrap break-all"
+              >{{ logs() }}</pre>
+            }
+          </div>
+        </section>
+      }
+    }
+  }
+</section>

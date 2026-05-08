@@ -1,0 +1,111 @@
+<section class="mx-auto px-6 md:px-8 py-8 max-w-3xl">
+  <header class="mb-8">
+    <h1 class="text-[28px] font-semibold tracking-[-0.5px] text-ink mb-1.5">
+      Mi perfil
+    </h1>
+    <p class="text-[14px] text-ink-subtle">
+      Datos de cuenta y cambio de contraseña.
+    </p>
+  </header>
+
+  @if (loading() && !profile()) {
+    <div class="rounded-lg border border-hairline bg-surface-1 p-8 text-sm text-ink-subtle">
+      Cargando perfil…
+    </div>
+  } @else if (profile(); as me) {
+    <section class="rounded-lg border border-hairline bg-surface-1 mb-6">
+      <header class="px-5 py-4 border-b border-hairline">
+        <h2 class="text-[15px] font-medium text-ink">Datos de cuenta</h2>
+      </header>
+      <dl class="p-5 grid grid-cols-3 gap-y-3 gap-x-4 text-sm">
+        <dt class="text-ink-tertiary">Usuario</dt>
+        <dd class="col-span-2 font-mono text-ink">{{ me.username }}</dd>
+        <dt class="text-ink-tertiary">Email</dt>
+        <dd class="col-span-2 font-mono text-ink-muted">{{ me.email }}</dd>
+        <dt class="text-ink-tertiary">Rol</dt>
+        <dd class="col-span-2">
+          <span
+            class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium uppercase tracking-wide"
+            [class.bg-primary]="me.role === 'ADMIN'"
+            [class.text-on-primary]="me.role === 'ADMIN'"
+            [class.bg-surface-2]="me.role !== 'ADMIN'"
+            [class.text-ink-muted]="me.role !== 'ADMIN'"
+          >
+            {{ me.role }}
+          </span>
+        </dd>
+        <dt class="text-ink-tertiary">Estado</dt>
+        <dd class="col-span-2">
+          @if (me.enabled) {
+            <span class="text-success text-sm">Activa</span>
+          } @else {
+            <span class="text-danger text-sm">Deshabilitada</span>
+          }
+        </dd>
+        <dt class="text-ink-tertiary">Miembro desde</dt>
+        <dd class="col-span-2 text-ink-muted">{{ formatDate(me.createdAt) }}</dd>
+      </dl>
+    </section>
+
+    <section class="rounded-lg border border-hairline bg-surface-1">
+      <header class="px-5 py-4 border-b border-hairline">
+        <h2 class="text-[15px] font-medium text-ink">Cambiar contraseña</h2>
+      </header>
+      <form
+        class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4"
+        [formGroup]="passwordForm"
+        (ngSubmit)="submitPassword()"
+      >
+        <div class="sm:col-span-2">
+          <label class="block text-xs text-ink-muted mb-1.5">Contraseña actual</label>
+          <input
+            type="password"
+            formControlName="currentPassword"
+            autocomplete="current-password"
+            class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm text-ink"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-ink-muted mb-1.5">Nueva contraseña</label>
+          <input
+            type="password"
+            formControlName="newPassword"
+            autocomplete="new-password"
+            class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm text-ink"
+          />
+          <p class="mt-1 text-[11px] text-ink-tertiary">Mínimo 6 caracteres.</p>
+        </div>
+        <div>
+          <label class="block text-xs text-ink-muted mb-1.5">Confirmar nueva</label>
+          <input
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            class="w-full h-10 px-3 rounded-md bg-surface-2 border border-hairline focus:border-primary-focus outline-none text-sm text-ink"
+          />
+        </div>
+
+        @if (errorMessage()) {
+          <p class="sm:col-span-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger">
+            {{ errorMessage() }}
+          </p>
+        }
+        @if (successMessage()) {
+          <p class="sm:col-span-2 rounded-md border border-success/40 bg-success/10 px-3 py-2 text-xs text-success">
+            {{ successMessage() }}
+          </p>
+        }
+
+        <div class="sm:col-span-2 flex justify-end">
+          <button
+            type="submit"
+            class="h-10 px-5 rounded-md bg-primary hover:bg-primary-hover text-on-primary text-sm font-medium transition-colors disabled:opacity-50"
+            [disabled]="saving() || passwordForm.invalid"
+          >
+            @if (saving()) { Guardando… } @else { Actualizar contraseña }
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+</section>

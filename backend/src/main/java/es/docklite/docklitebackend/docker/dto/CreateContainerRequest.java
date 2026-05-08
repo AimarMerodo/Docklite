@@ -11,7 +11,7 @@ import java.util.List;
 public record CreateContainerRequest(
         @NotBlank String image,
         String name,
-        boolean autoStart,
+        Boolean autoStart,
         String networkId,
         @Valid List<VolumeMount> volumes,
         @Valid List<EnvVar> env,
@@ -29,4 +29,8 @@ public record CreateContainerRequest(
         @DecimalMin(value = "0.1", message = "cpus must be at least 0.1")
         Double cpus
 ) {
+        /** Treats absent / null autoStart as false. */
+        public boolean shouldAutoStart() {
+                return Boolean.TRUE.equals(autoStart);
+        }
 }

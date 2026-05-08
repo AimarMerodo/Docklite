@@ -1,0 +1,25 @@
+# Force LF line endings on text files that are executed or interpreted
+# on Linux at runtime. Without this, a Windows clone with
+# `core.autocrlf=true` would commit CRLFs and break the script when
+# checked out on the target Linux host.
+
+* text=auto eol=lf
+
+*.sh           text eol=lf
+*.bash         text eol=lf
+Dockerfile     text eol=lf
+*.conf         text eol=lf
+*.template     text eol=lf
+*.yml          text eol=lf
+*.yaml         text eol=lf
+*.env.example  text eol=lf
+
+# Treat these as binary so git doesn't try to normalize line endings.
+*.png          binary
+*.jpg          binary
+*.jpeg         binary
+*.gif          binary
+*.ico          binary
+*.pdf          binary
+*.docx         binary
+*.pen          binary

@@ -22,6 +22,12 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# docker-cli + docker-cli-buildx so the backend can run
+# `docker buildx imagetools inspect <ref>` to read the ExposedPorts of an
+# image still in the registry without pulling its layers (used by
+# GET /images/inspect-remote).
+RUN apk add --no-cache docker-cli docker-cli-buildx
+
 # Copy the fat jar produced by the builder stage.
 COPY --from=builder /build/target/*.jar app.jar
 

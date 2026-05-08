@@ -29,15 +29,18 @@ public class NetworkService {
 
     public List<NetworkDto> list(User currentUser) {
         List<Network> all = dockerClient.listNetworksCmd().exec();
+        ContainerUsageIndex usage = ContainerUsageIndex.forUser(dockerClient, ownershipService, currentUser);
 
         if (currentUser.getRole() == Role.ADMIN) {
-            return all.stream().map(NetworkDto::from).toList();
+            return all.stream()
+                    .map(n -> NetworkDto.from(n, usage.containersOnNetwork(n.getName())))
+                    .toList();
         }
 
         List<String> ownedIds = ownershipService.getResourceIds(currentUser.getId(), ResourceType.NETWORK);
         return all.stream()
                 .filter(n -> DEFAULT_NETWORKS.contains(n.getName()) || ownedIds.contains(n.getId()))
-                .map(NetworkDto::from)
+                .map(n -> NetworkDto.from(n, usage.containersOnNetwork(n.getName())))
                 .toList();
     }
 
@@ -58,7 +61,11 @@ public class NetworkService {
         if (!isDefaultNetwork(info.getName())) {
             checkAccess(info.getId(), currentUser);
         }
-        return new NetworkDto(info.getId(), info.getName(), info.getDriver(), info.getScope());
+        // Rebuild the connected container list filtered by the user's
+        // ownership — the inspect response would otherwise leak names of
+        // other users' containers attached to default networks like bridge.
+        ContainerUsageIndex usage = ContainerUsageIndex.forUser(dockerClient, ownershipService, currentUser);
+        return NetworkDto.from(info, usage.containersOnNetwork(info.getName()));
     }
 
     public void remove(String id, User currentUser) {

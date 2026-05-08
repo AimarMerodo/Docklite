@@ -8,5 +8,12 @@ public enum ActivityAction {
     DELETE,
     PULL,
     CONNECT,
-    DISCONNECT
+    DISCONNECT,
+    UPDATE_MOUNTS,
+    UPDATE_PORTS,
+    UPDATE_ENV,
+    UPDATE_COMMAND,
+    UPDATE_HEALTHCHECK,
+    UPDATE_RESOURCES,
+    RENAME
 }

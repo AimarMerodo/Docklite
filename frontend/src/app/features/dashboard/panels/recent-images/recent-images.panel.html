@@ -1,0 +1,40 @@
+<header
+  class="flex items-end justify-between px-5 pt-5 pb-3 border-b border-hairline"
+>
+  <h2 class="text-[15px] font-medium tracking-[-0.2px] text-ink">
+    Imágenes recientes
+  </h2>
+  <a
+    routerLink="/images"
+    class="text-xs text-ink-subtle hover:text-ink transition-colors"
+  >
+    Ver todas →
+  </a>
+</header>
+
+@if (loading()) {
+  <div class="px-5 py-6 text-sm text-ink-subtle">Cargando…</div>
+} @else if (visible().length === 0) {
+  <div class="px-5 py-8 text-center">
+    <p class="text-sm text-ink">Sin imágenes</p>
+    <p class="mt-1 text-xs text-ink-subtle">Pull una imagen para verla aquí.</p>
+  </div>
+} @else {
+  <ul class="divide-y divide-hairline-tertiary">
+    @for (img of visible(); track img.id) {
+      <li class="flex items-center gap-3 px-5 py-2.5 text-sm">
+        <span class="flex-1 min-w-0 truncate text-ink">
+          {{ primaryTag(img) }}
+        </span>
+        <span class="font-mono text-xs text-ink-subtle shrink-0">
+          {{ shortDigest(img.id) }}
+        </span>
+        <span
+          class="text-xs text-ink-tertiary shrink-0 tabular-nums w-16 text-right"
+        >
+          {{ formatBytes(img.size) }}
+        </span>
+      </li>
+    }
+  </ul>
+}

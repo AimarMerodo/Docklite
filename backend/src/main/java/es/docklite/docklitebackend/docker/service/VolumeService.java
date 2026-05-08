@@ -2,9 +2,11 @@ package es.docklite.docklitebackend.docker.service;
 
 import com.github.dockerjava.api.command.CreateVolumeResponse;
 import com.github.dockerjava.api.command.InspectVolumeResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.DockerClient;
 import es.docklite.docklitebackend.audit.entity.ActivityAction;
 import es.docklite.docklitebackend.audit.service.ActivityLogService;
+import es.docklite.docklitebackend.common.exception.ResourceAlreadyExistsException;
 import es.docklite.docklitebackend.common.exception.SecurityMessages;
 import es.docklite.docklitebackend.docker.dto.CreateVolumeRequest;
 import es.docklite.docklitebackend.docker.dto.VolumeDto;
@@ -27,19 +29,33 @@ public class VolumeService {
 
     public List<VolumeDto> list(User currentUser) {
         List<InspectVolumeResponse> all = dockerClient.listVolumesCmd().exec().getVolumes();
+        ContainerUsageIndex usage = ContainerUsageIndex.forUser(dockerClient, ownershipService, currentUser);
 
         if (currentUser.getRole() == Role.ADMIN) {
-            return all.stream().map(VolumeDto::from).toList();
+            return all.stream()
+                    .map(v -> VolumeDto.from(v, usage.containersUsingVolume(v.getName())))
+                    .toList();
         }
 
         List<String> ownedNames = ownershipService.getResourceIds(currentUser.getId(), ResourceType.VOLUME);
         return all.stream()
                 .filter(v -> ownedNames.contains(v.getName()))
-                .map(VolumeDto::from)
+                .map(v -> VolumeDto.from(v, usage.containersUsingVolume(v.getName())))
                 .toList();
     }
 
     public VolumeDto create(CreateVolumeRequest req, User currentUser) {
+        // Docker treats createVolume as idempotent (returns existing volume
+        // if name already exists), but our ownership table enforces a unique
+        // (resource_id, resource_type, owner_id) row, so a duplicate insert
+        // would surface as a 500. Pre-check the daemon and surface a 409.
+        try {
+            dockerClient.inspectVolumeCmd(req.name()).exec();
+            throw new ResourceAlreadyExistsException("Volume '" + req.name() + "' already exists");
+        } catch (NotFoundException notExists) {
+            // OK, we are free to create
+        }
+
         CreateVolumeResponse response = dockerClient.createVolumeCmd()
                 .withName(req.name())
                 .withDriver(req.driverOrDefault())

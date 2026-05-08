@@ -16,7 +16,7 @@
 set -euo pipefail
 
 # Update this when you fork/publish:
-REPO_URL="https://github.com/aimar/docklite.git"
+REPO_URL="https://github.com/AimarMerodo/Docklite.git"
 
 # Allow interactive prompts even when stdin is a pipe (curl | bash).
 if [[ ! -t 0 ]]; then
@@ -89,6 +89,27 @@ ensure_privileges() {
     err "This script needs root privileges (or sudo) to install packages."
     err "Run it as root, or install sudo and try again."
     exit 1
+}
+
+
+# ─────────── Basic tooling (curl/openssl/envsubst) ───────────
+# install_docker apt-get's curl & friends, but the script needs them
+# earlier (IP detection, secret generation) and on hosts that already
+# have Docker we'd skip install_docker entirely. Make sure they exist
+# unconditionally so the script doesn't fail half-way through.
+ensure_basic_tools() {
+    local missing=()
+    command -v curl     >/dev/null 2>&1 || missing+=(curl)
+    command -v openssl  >/dev/null 2>&1 || missing+=(openssl)
+    # envsubst lives in gettext-base on Debian/Ubuntu.
+    command -v envsubst >/dev/null 2>&1 || missing+=(gettext-base)
+
+    if (( ${#missing[@]} == 0 )); then
+        return
+    fi
+    log "Installing required tooling: ${missing[*]}"
+    $SUDO apt-get update -y
+    $SUDO apt-get install -y "${missing[@]}"
 }
 
 
@@ -394,16 +415,30 @@ deploy_stack() {
     fi
 
     log "Waiting for backend to become healthy..."
-    local tries=30
+    local tries=60   # 60 * 2s = 2 min cap, enough for first DB schema + admin bootstrap
+    local status=""
     while (( tries > 0 )); do
-        if curl -fsS --max-time 2 "http://localhost:$FRONTEND_HTTP_PORT/api/v1/auth/login" \
-            -H "Content-Type: application/json" -d '{"email":"x","password":"x"}' \
-            >/dev/null 2>&1; then
+        # Use the container's built-in healthcheck instead of curl-ing
+        # /api/v1/auth/login: that endpoint returns 401 on bogus creds,
+        # which curl -f would treat as failure and never break the loop.
+        status="$(docker inspect --format '{{.State.Health.Status}}' docklite-backend 2>/dev/null || true)"
+        if [[ "$status" == "healthy" ]]; then
             break
+        fi
+        if [[ "$status" == "unhealthy" ]]; then
+            err "Backend container went unhealthy. Check logs:"
+            err "    docker compose logs backend --tail=100"
+            exit 1
         fi
         sleep 2
         ((tries--))
     done
+    if [[ "$status" != "healthy" ]]; then
+        warn "Backend did not become healthy within 2 minutes."
+        warn "It might still come up — check 'docker compose logs backend' if not."
+    else
+        ok "Backend healthy."
+    fi
     ok "Stack started."
 }
 
@@ -445,6 +480,7 @@ main() {
 
     ensure_privileges
     detect_os
+    ensure_basic_tools
     ensure_repo
 
     if [[ -f .env ]]; then

@@ -4,15 +4,17 @@ import es.docklite.docklitebackend.common.dto.PageResponse;
 import es.docklite.docklitebackend.user.dto.UpdateProfileRequest;
 import es.docklite.docklitebackend.user.dto.UserDto;
 import es.docklite.docklitebackend.user.entity.User;
-import es.docklite.docklitebackend.user.repository.UserRepository;
 import es.docklite.docklitebackend.user.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@Validated
 public class UserController {
-    private final UserRepository userRepository;
     private final UserService userService;
 
 
@@ -43,11 +45,11 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public PageResponse<UserDto> list(@RequestParam(defaultValue = "0") int page,
-                                      @RequestParam(defaultValue = "20") int size) {
+    public PageResponse<UserDto> list(
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "page must be >= 0") int page,
+            @RequestParam(defaultValue = "20") @Min(value = 1, message = "size must be >= 1") @Max(value = 100, message = "size must be <= 100") int size) {
         return PageResponse.from(
-                userRepository.findAll(PageRequest.of(page, size, Sort.by("id").descending()))
-                        .map(UserDto::from)
+                userService.list(PageRequest.of(page, size, Sort.by("id").descending()))
         );
     }
 

@@ -1,7 +1,10 @@
 package es.docklite.docklitebackend.common.exception;
 
+import com.github.dockerjava.api.exception.ConflictException;
+import com.github.dockerjava.api.exception.InternalServerErrorException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,12 +17,18 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({EmailAlreadyExistsException.class, UsernameAlreadyExistsException.class})
+    @ExceptionHandler({
+            EmailAlreadyExistsException.class,
+            UsernameAlreadyExistsException.class,
+            ResourceAlreadyExistsException.class
+    })
     public ResponseEntity<ErrorResponse> handleConflict(RuntimeException ex) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
@@ -59,6 +68,61 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.of(HttpStatus.NOT_FOUND, "Docker resource not found"));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleDockerConflict(ConflictException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(HttpStatus.CONFLICT, extractDaemonMessage(ex.getMessage())));
+    }
+
+    @ExceptionHandler(InvalidContainerStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidContainerState(InvalidContainerStateException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(HttpStatus.CONFLICT, ex.getMessage()));
+    }
+
+    @ExceptionHandler(InternalServerErrorException.class)
+    public ResponseEntity<ErrorResponse> handleDockerInternal(InternalServerErrorException ex) {
+        String raw = ex.getMessage();
+        if (raw != null && raw.contains("port is already allocated")) {
+            Matcher m = PORT_BIND_PATTERN.matcher(raw);
+            String addr = m.find() ? m.group(1) : "host";
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(ErrorResponse.of(HttpStatus.CONFLICT, "Port " + addr + " is already in use"));
+        }
+        log.error("Docker daemon error", ex);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "Docker operation failed"));
+    }
+
+    // Captures the JSON value after "message":"…", honoring escaped quotes
+    // so messages containing names like "/nginx" don't get truncated.
+    private static final Pattern DAEMON_MESSAGE_PATTERN =
+            Pattern.compile("\"message\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
+    private static final Pattern PORT_BIND_PATTERN =
+            Pattern.compile("Bind for ([\\d.:]+) failed");
+
+    private String extractDaemonMessage(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "Conflict with current state";
+        }
+        Matcher m = DAEMON_MESSAGE_PATTERN.matcher(raw);
+        if (m.find()) {
+            // Undo the JSON escapes the regex preserves (\" → ", \\ → \,
+            // \n → newline, \t → tab) so the user sees a plain string.
+            return m.group(1)
+                    .replace("\\\"", "\"")
+                    .replace("\\\\", "\\")
+                    .replace("\\n", " ")
+                    .replace("\\t", " ")
+                    .trim();
+        }
+        return raw.replaceFirst("^Status\\s+\\d+:\\s*", "").trim();
     }
 
     @ExceptionHandler(InvitationNotFoundException.class)
@@ -110,6 +174,28 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 fields.put(error.getField(), error.getDefaultMessage())
         );
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(HttpStatus.BAD_REQUEST, "Validation failed", fields));
+    }
+
+    /**
+     * Triggered by Bean Validation on @RequestParam / @PathVariable values
+     * (e.g. {@code @Min(0) int page}). Different exception type than the one
+     * for @RequestBody validation, so it needs its own handler.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
+        Map<String, String> fields = new HashMap<>();
+        ex.getConstraintViolations().forEach(v -> {
+            String path = v.getPropertyPath().toString();
+            // Trim the method-name prefix from the property path (e.g.
+            // "list.page" → "page") so the response is consistent with
+            // @RequestBody validation errors.
+            int dot = path.lastIndexOf('.');
+            String field = dot >= 0 ? path.substring(dot + 1) : path;
+            fields.put(field, v.getMessage());
+        });
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of(HttpStatus.BAD_REQUEST, "Validation failed", fields));

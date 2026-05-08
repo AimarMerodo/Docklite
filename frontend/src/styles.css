@@ -1,3 +1,119 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'tailwindcss';
 
-@import "tailwindcss";
+/* Dark theme is default. Light theme is opt-in via `html.light`. */
+@custom-variant light (&:where(html.light, html.light *));
+
+@theme {
+  --color-canvas: #010204;
+  --color-surface-1: #0a0c10;
+  --color-surface-2: #14171c;
+  --color-surface-3: #1d2128;
+  --color-surface-4: #262a32;
+
+  --color-hairline: #23252a;
+  --color-hairline-strong: #2f323a;
+  --color-hairline-tertiary: #1a1c20;
+
+  --color-ink: #f7f8f8;
+  --color-ink-muted: #d0d6e0;
+  --color-ink-subtle: #8a8f98;
+  --color-ink-tertiary: #62666d;
+
+  --color-primary: #2496ed;
+  --color-primary-hover: #4daef1;
+  --color-primary-focus: #2391e8;
+  --color-on-primary: #ffffff;
+  --color-brand-secure: #5a7b96;
+
+  --color-success: #27a644;
+  --color-warning: #c4a017;
+  --color-danger: #c44a3a;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+
+  --font-sans: 'Inter', -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+}
+
+/* Light theme overrides — surfaces and ink invert, primary stays Docker blue. */
+html.light {
+  --color-canvas: #fafbfc;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #f1f3f5;
+  --color-surface-3: #e6e9ed;
+  --color-surface-4: #d9dde2;
+
+  --color-hairline: #e2e5ea;
+  --color-hairline-strong: #c9ced5;
+  --color-hairline-tertiary: #eef0f3;
+
+  --color-ink: #0d1117;
+  --color-ink-muted: #303841;
+  --color-ink-subtle: #5b6470;
+  --color-ink-tertiary: #8a8f98;
+
+  --color-primary-hover: #2391e8;
+
+  --color-overlay: rgba(15, 20, 28, 0.4);
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: -0.05px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus ring for interactive chrome (buttons, links, etc).
+   Inputs/textareas/selects manage their own focus via wrapper borders, so
+   excluding them prevents double rings. */
+:focus-visible:not(input):not(textarea):not(select) {
+  outline: 2px solid color-mix(in srgb, var(--color-primary-focus) 50%, transparent);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-3) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-surface-3);
+  border-radius: var(--radius-md);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-surface-4);
+}
+
+/* Opt-out helper for places where the scrollbar is just visual noise
+   (e.g. tab strips that only ever overflow on narrow viewports). The
+   global rules above use `*` which beats Tailwind utilities, so we need
+   the explicit selector + !important to win. */
+.no-scrollbar {
+  scrollbar-width: none !important;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}

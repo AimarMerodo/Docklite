@@ -1,0 +1,378 @@
+<section class="mx-auto px-6 md:px-8 py-8 max-w-[1440px]">
+  <header class="flex items-start justify-between gap-6 mb-8">
+    <div class="flex flex-col gap-1.5">
+      <h1 class="text-[28px] font-semibold tracking-[-0.5px] text-ink">
+        Contenedores
+      </h1>
+      <p class="text-[14px] text-ink-subtle">
+        Gestiona y monitoriza tus contenedores Docker
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink transition-colors disabled:opacity-50"
+        [disabled]="loading()"
+        (click)="reload()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          [class.animate-spin]="loading()"
+        >
+          <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+          <path d="M21 3v5h-5" />
+        </svg>
+        <span class="text-sm">Refrescar</span>
+      </button>
+
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 h-10 px-4.5 rounded-md bg-primary hover:bg-primary-hover text-on-primary transition-colors"
+        (click)="openWizard()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        <span class="text-sm font-medium">Nuevo contenedor</span>
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div
+      class="mb-5 rounded-md border border-hairline-strong bg-surface-2 px-4 py-3 text-sm"
+      role="alert"
+    >
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <app-stat-card label="total_containers" [value]="stats().total" variant="accent">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" />
+        <path d="m3.3 7.5 8.7 5 8.7-5M12 22V12.5" />
+      </svg>
+    </app-stat-card>
+
+    <app-stat-card label="running" [value]="stats().running" variant="success">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+        <path d="M8 5v14l11-7Z" />
+      </svg>
+    </app-stat-card>
+
+    <app-stat-card label="stopped" [value]="stats().stopped" variant="muted">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+        <rect x="4" y="4" width="16" height="16" rx="1" />
+      </svg>
+    </app-stat-card>
+
+    <app-stat-card label="unhealthy" [value]="stats().unhealthy" variant="muted">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 9v4M12 17h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.7 3h16.96a2 2 0 0 0 1.7-3L13.7 3.86a2 2 0 0 0-3.4 0Z" />
+      </svg>
+    </app-stat-card>
+  </div>
+
+  <div class="flex items-center gap-3 mb-4">
+    <div
+      class="flex-1 flex items-center gap-3 h-11 px-4 rounded-md bg-surface-1 border border-hairline focus-within:border-primary-focus"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="text-ink-tertiary shrink-0"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+      <input
+        type="search"
+        placeholder="Buscar contenedores..."
+        [value]="search()"
+        (input)="onSearch($event)"
+        class="flex-1 bg-transparent outline-none text-sm text-ink placeholder:text-ink-tertiary"
+      />
+    </div>
+
+    <div class="relative">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 h-11 px-4 rounded-md bg-surface-2 text-ink-muted hover:text-ink transition-colors"
+        [class.text-ink]="filterOpen()"
+        (click)="toggleFilter()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M3 6h18M6 12h12M10 18h4" />
+        </svg>
+        <span class="text-sm">Estado</span>
+        @if (hiddenStatusCount() > 0) {
+          <span
+            class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-primary/20 text-primary text-[10px] font-semibold"
+          >
+            {{ hiddenStatusCount() }}
+          </span>
+        }
+        <svg
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          [class.rotate-180]="filterOpen()"
+          class="transition-transform"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+
+      @if (filterOpen()) {
+        <div class="fixed inset-0 z-30" (click)="closeFilter()"></div>
+        <div
+          class="absolute right-0 top-12 z-40 w-60 rounded-md bg-surface-2 border border-hairline-strong shadow-lg overflow-hidden"
+          (click)="$event.stopPropagation()"
+        >
+          <header
+            class="flex items-center justify-between px-3 py-2 border-b border-hairline"
+          >
+            <span class="text-xs font-medium text-ink-muted uppercase tracking-wide">
+              Mostrar
+            </span>
+            @if (hiddenStatusCount() > 0) {
+              <button
+                type="button"
+                class="text-xs text-primary hover:text-primary-hover"
+                (click)="resetStatusFilter()"
+              >
+                Reset
+              </button>
+            }
+          </header>
+          <ul class="py-1">
+            @for (opt of statusOptions; track opt.state) {
+              <li>
+                <button
+                  type="button"
+                  class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-ink hover:bg-surface-3 transition-colors"
+                  (click)="toggleStatus(opt.state)"
+                >
+                  <span
+                    class="inline-flex items-center justify-center w-4 h-4 rounded-sm border"
+                    [class.bg-primary]="isStatusActive(opt.state)"
+                    [class.border-primary]="isStatusActive(opt.state)"
+                    [class.border-hairline-strong]="!isStatusActive(opt.state)"
+                  >
+                    @if (isStatusActive(opt.state)) {
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="12"
+                        height="12"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="text-on-primary"
+                      >
+                        <path d="m5 12 5 5L20 7" />
+                      </svg>
+                    }
+                  </span>
+                  <span class="flex-1 text-left">{{ opt.label }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+
+    <div class="relative">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 h-11 px-4 rounded-md bg-surface-2 text-ink-muted hover:text-ink transition-colors"
+        [class.text-ink]="sortOpen()"
+        (click)="toggleSort()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="m3 7 4-4 4 4M7 3v18M21 17l-4 4-4-4M17 21V3" />
+        </svg>
+        <span class="text-sm">{{ sortLabel() }}</span>
+        <svg
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          [class.rotate-180]="sortOpen()"
+          class="transition-transform"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+
+      @if (sortOpen()) {
+        <div class="fixed inset-0 z-30" (click)="closeSort()"></div>
+        <div
+          class="absolute right-0 top-12 z-40 w-52 rounded-md bg-surface-2 border border-hairline-strong shadow-lg overflow-hidden"
+          (click)="$event.stopPropagation()"
+        >
+          <header
+            class="px-3 py-2 border-b border-hairline text-xs font-medium text-ink-muted uppercase tracking-wide"
+          >
+            Ordenar por
+          </header>
+          <ul class="py-1">
+            @for (opt of sortOptions; track opt.key) {
+              <li>
+                <button
+                  type="button"
+                  class="flex items-center gap-2.5 w-full px-3 py-2 text-sm transition-colors"
+                  [class.text-ink]="sortKey() === opt.key"
+                  [class.font-medium]="sortKey() === opt.key"
+                  [class.text-ink-muted]="sortKey() !== opt.key"
+                  [class.bg-surface-3]="sortKey() === opt.key"
+                  [class.hover:bg-surface-3]="sortKey() !== opt.key"
+                  (click)="setSort(opt.key)"
+                >
+                  <span class="flex-1 text-left">{{ opt.label }}</span>
+                  @if (sortKey() === opt.key) {
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="text-primary"
+                    >
+                      <path d="m5 12 5 5L20 7" />
+                    </svg>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-hairline bg-surface-1 overflow-hidden">
+    <div
+      class="flex items-center gap-4 px-5 h-11 bg-surface-2 border-b border-hairline-strong"
+    >
+      <span class="w-[280px] text-[11px] font-medium tracking-[0.6px] text-ink-muted uppercase shrink-0">
+        Container
+      </span>
+      <span class="w-[120px] text-[11px] font-medium tracking-[0.6px] text-ink-muted uppercase shrink-0">
+        Status
+      </span>
+      <span class="w-[200px] text-[11px] font-medium tracking-[0.6px] text-ink-muted uppercase shrink-0">
+        Image
+      </span>
+      <span class="w-[100px] text-[11px] font-medium tracking-[0.6px] text-ink-muted uppercase shrink-0">
+        Uptime
+      </span>
+      <span class="flex-1 text-right text-[11px] font-medium tracking-[0.6px] text-ink-muted uppercase">
+        Actions
+      </span>
+    </div>
+
+    @if (loading() && containers().length === 0) {
+      <div class="px-5 py-12 text-center text-sm text-ink-subtle">Cargando…</div>
+    } @else if (filtered().length === 0) {
+      <div class="px-5 py-12 text-center">
+        <p class="text-base text-ink">Sin resultados</p>
+        <p class="mt-1 text-xs text-ink-subtle">
+          @if (search()) {
+            Ningún contenedor coincide con "{{ search() }}".
+          } @else {
+            Crea un contenedor para empezar.
+          }
+        </p>
+      </div>
+    } @else {
+      @for (c of filtered(); track c.id) {
+        <app-container-row
+          [container]="c"
+          [pending]="pending()[c.id] ?? null"
+          (action)="onAction(c, $event)"
+        />
+      }
+    }
+  </div>
+
+  <app-create-container-wizard
+    [open]="wizardOpen()"
+    (close)="closeWizard()"
+    (created)="onContainerCreated()"
+  />
+</section>
