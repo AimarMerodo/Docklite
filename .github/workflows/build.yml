@@ -53,9 +53,18 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('backend/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Build and analyze
+      - name: Build (compile + tests)
+        working-directory: backend
+        run: mvn -B verify
+
+      # SonarQube analysis — non-blocking. The Sonar server is self-hosted
+      # so it may be offline; we don't want that to fail the whole CI run
+      # (the build itself already passed above).
+      - name: SonarQube analysis
+        if: ${{ env.SONAR_HOST_URL != '' && env.SONAR_TOKEN != '' }}
+        continue-on-error: true
         working-directory: backend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=Docklite-Backend -Dsonar.projectName='Docklite-Backend'
+        run: mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.6.0.6792:sonar -Dsonar.projectKey=Docklite-Backend -Dsonar.projectName='Docklite-Backend'
