@@ -77,3 +77,4 @@ coverage/
 .claude/
 .claude-flow/
 CLAUDE.md
+.mcp.json

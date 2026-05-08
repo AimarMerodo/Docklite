@@ -39,3 +39,4 @@ build/
 ### Claude Code / claude-flow ###
 .claude/
 .claude-flow/
+.mcp.json

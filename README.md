@@ -11,13 +11,13 @@ Proyecto Final del Grado Superior **Desarrollo de Aplicaciones Web (DAW)** — I
 Requiere un servidor **Debian 12+** o **Ubuntu 22.04+** con acceso root o `sudo`.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AimarMerodo/DockLite/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AimarMerodo/Docklite/main/install.sh | bash
 ```
 
 El instalador es completamente interactivo:
 
 1. Comprueba el sistema operativo (Debian/Ubuntu).
-2. Instala **Docker** y **git** si no están.
+2. Instala **Docker**, **git** y herramientas básicas (curl, openssl, gettext) si no están.
 3. Clona el repositorio.
 4. Pregunta el modo de despliegue:
    - **Dominio** → HTTPS automático con Let's Encrypt.
@@ -26,13 +26,39 @@ El instalador es completamente interactivo:
 6. Genera secrets aleatorios (`POSTGRES_PASSWORD`, `JWT_SECRET`).
 7. Lanza el stack y muestra al final la URL y las credenciales.
 
+> ⚠️ Si la contraseña del admin se autogenera, **se muestra una sola vez al final del instalador**. Cópiala antes de cerrar la consola — no se vuelve a mostrar.
+
 ### Alternativa — clonar manualmente
 
 ```bash
-git clone https://github.com/AimarMerodo/DockLite.git
-cd DockLite
+git clone https://github.com/AimarMerodo/Docklite.git
+cd Docklite
 ./install.sh
 ```
+
+---
+
+## ✨ Qué puedes hacer
+
+**Como cualquier usuario (incluido el admin)**:
+
+- **Contenedores** — listar, crear (wizard de 3 pasos con autocomplete de puertos a partir del `EXPOSE` de la imagen), arrancar, parar, reiniciar, eliminar y ver logs en vivo.
+- **Detalle de contenedor con 6 pestañas**:
+  - General — info principal + sparklines en vivo de CPU y memoria (refresh cada 2s).
+  - Volúmenes — montar, editar y desmontar volúmenes con recreate transparente.
+  - Red — conectar/desconectar redes en caliente; publicar, editar y quitar mapeos de puertos.
+  - Logs — auto-scroll al final, copia con un click, tail configurable.
+  - Settings — editar env vars, comando/entrypoint, healthcheck, recursos (memoria/CPU/restart) y renombrar.
+- **Imágenes** — listar, pull desde Docker Hub con búsqueda integrada, ver quién las pulleó y qué contenedores las usan, eliminar (admin).
+- **Volúmenes** y **Redes** — listar, crear y eliminar; ver qué contenedor los usa.
+- **Mi perfil** — cambio de contraseña.
+
+**Solo admin**:
+
+- **Usuarios** — listar, resetear contraseñas (genera una temporal de un solo uso), habilitar/deshabilitar cuentas.
+- **Invitaciones** — generar enlaces de un solo uso (configurable nº de usos y caducidad), copiar URL y cancelar.
+
+**Privacidad multi-usuario**: cada usuario ve solo sus propios contenedores, volúmenes y redes. El admin lo ve todo. Los nombres de contenedores ajenos nunca se filtran a través de columnas tipo "En uso por" o "Connected to".
 
 ---
 
@@ -43,7 +69,7 @@ cd DockLite
                               │
                               ▼  :80 / :443
               ┌────────────── frontend ──────────────┐
-              │  nginx + Angular SPA                 │
+              │  nginx + Angular 21 SPA              │
               │  ─ sirve la app                      │
               │  ─ proxea /api/* al backend          │
               │  ─ termina TLS en HTTPS              │
@@ -52,7 +78,7 @@ cd DockLite
                          ▼
               ┌──────────────────┐    ┌──────────────┐
               │     backend      │───►│      db      │
-              │  Spring Boot     │    │  Postgres 16 │
+              │  Spring Boot 4   │    │  Postgres 16 │
               │  ─ JWT auth      │    │              │
               │  ─ docker-java   │    └──────────────┘
               └────────┬─────────┘
@@ -72,18 +98,9 @@ El **frontend es lo único expuesto al exterior**. Backend y base de datos viven
 
 1. Abre la URL que te muestra el instalador.
 2. Inicia sesión con el admin y la contraseña generada.
-3. Crea un **link de invitación** desde *Admin → Invitations*. Configura cuántos usos y cuántos días vale.
+3. Crea un **link de invitación** desde *Admin → Invitaciones*. Configura cuántos usos y cuántos días vale.
 4. Comparte el link (Slack, WhatsApp, lo que sea — DockLite no envía emails, eres tú quien comparte).
 5. Cada invitado abre el link, elige usuario y contraseña, y entra.
-
-A partir de ahí cada usuario puede:
-
-- Crear, parar, reiniciar y borrar contenedores.
-- Pull de imágenes desde Docker Hub.
-- Crear redes y volúmenes.
-- Conectar contenedores a redes.
-- Ver logs en tiempo real.
-- **Solo ve sus propios recursos** (el admin lo ve todo).
 
 ---
 
@@ -103,6 +120,8 @@ Otras notas:
 - `JWT_SECRET` y `POSTGRES_PASSWORD` se generan aleatorios por el instalador (256 bits).
 - El archivo `.env` se crea con permisos `600` (solo el dueño puede leerlo).
 - **Cambia la contraseña del admin en el primer login** si fue auto-generada.
+- Rate limiting integrado contra brute-force de login.
+- Refresh tokens con rotación.
 
 ---
 
@@ -181,13 +200,13 @@ Recomendado: añade un cron para que se ejecute mensualmente.
 
 | Capa | Tecnología |
 |---|---|
-| Backend | Java 21 · Spring Boot 4.0 · Spring Security · Spring Data JPA · Flyway |
-| Frontend | Angular 21 · TypeScript |
+| Backend | Java 21 · Spring Boot 4.0 · Spring Security 6 · Spring Data JPA · Flyway |
+| Frontend | Angular 21 (standalone components, signals) · Tailwind v4 · TypeScript |
 | BBDD | PostgreSQL 16 |
-| Reverse proxy | nginx |
-| Auth | JWT (jjwt 0.12) · BCrypt |
+| Reverse proxy | nginx (alpine) |
+| Auth | JWT (jjwt 0.12) · BCrypt · Refresh tokens con rotación |
 | Docker control | docker-java 3.4 |
-| Docs API | OpenAPI / Swagger UI (`/swagger-ui.html`) |
+| Docs API | OpenAPI / Swagger UI (`/swagger-ui.html` en el contenedor del backend) |
 
 ---
 
@@ -223,6 +242,14 @@ Y vuelve a ejecutarlo.
 
 **La página carga pero las llamadas a `/api/*` dan 502**
 El backend aún se está inicializando. Comprueba con `docker compose ps` que todos los servicios están `healthy` y `Up`. Espera 30 segundos tras el arranque.
+
+**El install.sh falla con `bad interpreter: /usr/bin/env^M`**
+El archivo se ha clonado con line endings de Windows (CRLF). El repo tiene `.gitattributes` para evitarlo, pero si tu git está configurado raro:
+```bash
+sed -i 's/\r$//' install.sh
+chmod +x install.sh
+./install.sh
+```
 
 ---
 
