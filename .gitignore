@@ -35,7 +35,13 @@ Thumbs.db
 docker-compose.override.yml
 
 # ==== PostgreSQL ====
-*.sql
+# NOTE: do NOT add *.sql here — Flyway migrations under
+# backend/src/main/resources/db/migration/ MUST be committed.
+# Only ignore actual dumps/backups by name pattern.
+*-backup.sql
+*-dump.sql
+dump-*.sql
+backup-*.sql
 pgdata/
 postgres-data/
 
