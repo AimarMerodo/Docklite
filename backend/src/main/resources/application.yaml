@@ -14,6 +14,10 @@ jwt:
 
 server:
    port: 8080
+   # Trust X-Forwarded-* headers set by the nginx in front of us, so the
+   # request scheme/host/port match what the browser sees. Without this,
+   # same-origin POSTs behind HTTPS are misread as cross-origin → CORS 403.
+   forward-headers-strategy: framework
 
 app:
   public-url: ${APP_PUBLIC_URL:http://localhost:4200}
