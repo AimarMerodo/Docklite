@@ -414,6 +414,20 @@ ask_ports() {
 }
 
 
+# ─────────── Public URL finalization ───────────
+# APP_PUBLIC_URL is first built in ask_deployment_mode, BEFORE the ports are
+# known. Append the chosen port when it isn't the scheme default — the backend
+# builds invitation links from this URL, so a missing port breaks them.
+finalize_public_url() {
+    if [[ "$DEPLOY_MODE" == "ip" && "$FRONTEND_HTTP_PORT" != "80" ]]; then
+        APP_PUBLIC_URL="http://$SERVER_NAME:$FRONTEND_HTTP_PORT"
+    elif [[ "$DEPLOY_MODE" == "domain" && "$FRONTEND_HTTPS_PORT" != "443" ]]; then
+        APP_PUBLIC_URL="https://$SERVER_NAME:$FRONTEND_HTTPS_PORT"
+    fi
+    # proxy mode: the upstream proxy serves on standard HTTPS — leave as-is.
+}
+
+
 # ─────────── .env generation ───────────
 write_env() {
     local pg_password jwt_secret
@@ -630,6 +644,7 @@ main() {
     ask_deployment_mode
     ask_admin_account
     ask_ports
+    finalize_public_url
 
     write_env
 
