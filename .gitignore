@@ -78,6 +78,11 @@ coverage/
 *.backup
 *.bak
 
+# ==== Documentación personal / preparación TFG ====
+# API.md ya está trackeado y sigue en el repo;
+# esto solo ignora ficheros no trackeados dentro de docs/.
+docs/
+
 # ==== Claude Code / claude-flow workspace ====
 .claude/
 .claude-flow/
