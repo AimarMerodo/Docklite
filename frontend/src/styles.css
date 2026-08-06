@@ -93,14 +93,17 @@ body {
   scrollbar-width: thin;
   scrollbar-color: var(--color-surface-3) transparent;
 }
+
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
+
 *::-webkit-scrollbar-thumb {
   background: var(--color-surface-3);
   border-radius: var(--radius-md);
 }
+
 *::-webkit-scrollbar-thumb:hover {
   background: var(--color-surface-4);
 }
@@ -112,6 +115,7 @@ body {
 .no-scrollbar {
   scrollbar-width: none !important;
 }
+
 .no-scrollbar::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
