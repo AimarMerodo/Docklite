@@ -8,7 +8,11 @@
 #        cd docklite && ./install.sh
 #
 #   2. One-liner (script will install git and clone the repo for you)
-#        curl -fsSL https://raw.githubusercontent.com/aimar/docklite/main/install.sh | bash
+#        bash <(curl -fsSL https://raw.githubusercontent.com/AimarMerodo/Docklite/main/install.sh)
+#
+#      NOT 'curl … | bash': the installer is interactive, and when bash reads
+#      the script from stdin the prompts and the script text fight over the
+#      same descriptor (the install hangs and curl exits with error 23).
 #
 # No arguments — every option is asked interactively.
 # ──────────────────────────────────────────────────────────────
@@ -18,7 +22,24 @@ set -euo pipefail
 # Update this when you fork/publish:
 REPO_URL="https://github.com/AimarMerodo/Docklite.git"
 
-# Allow interactive prompts even when stdin is a pipe (curl | bash).
+# Piped execution (curl … | bash) can NOT work: bash reads the script from
+# stdin while executing it, so reattaching stdin to the terminal for the
+# interactive prompts would make bash read the REST OF THE SCRIPT from the
+# keyboard — the install hangs and curl dies with "(23) Failure writing
+# output". BASH_SOURCE[0] is only empty when the script source itself comes
+# from stdin, so bail out early with the right command.
+if [[ -z "${BASH_SOURCE[0]:-}" ]]; then
+    echo "[x] This installer is interactive and cannot be piped into bash." >&2
+    echo "    Run it with stdin left free for the prompts instead:" >&2
+    echo >&2
+    echo "    bash <(curl -fsSL https://raw.githubusercontent.com/AimarMerodo/Docklite/main/install.sh)" >&2
+    echo >&2
+    exit 1
+fi
+
+# Reattach the prompts to the terminal if stdin is not a TTY for any other
+# reason (e.g. './install.sh < /dev/null'). Safe here: the script source is
+# a real file, not stdin.
 if [[ ! -t 0 ]]; then
     exec </dev/tty
 fi

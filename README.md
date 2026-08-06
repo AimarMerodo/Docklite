@@ -11,8 +11,12 @@ Proyecto Final del Grado Superior **Desarrollo de Aplicaciones Web (DAW)** — I
 Requiere un servidor **Debian 12+** o **Ubuntu 22.04+** con acceso root o `sudo`.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AimarMerodo/Docklite/main/install.sh | bash
+bash <(curl -fsSL https://raw.githubusercontent.com/AimarMerodo/Docklite/main/install.sh)
 ```
+
+> ℹ️ No uses `curl … | bash`: el instalador es interactivo y necesita el
+> terminal (stdin) libre para sus preguntas. Con esa forma se queda colgado y
+> curl acaba con `(23) Failure writing output to destination`.
 
 El instalador es completamente interactivo:
 
