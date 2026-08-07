@@ -90,6 +90,27 @@ class DemoBootstrapTest {
     }
 
     @Test
+    void seedDisablesEveryEnabledNonDemoUser() {
+        User demo = User.builder().username("demo").email(DEMO_EMAIL).role(Role.DEMO).build();
+        demo.setEnabled(true);
+        User other = User.builder().username("aimar").email("aimar@local.test").role(Role.ADMIN).build();
+        other.setEnabled(true);
+        User alreadyOff = User.builder().username("old").email("old@local.test").role(Role.USER).build();
+        alreadyOff.setEnabled(false);
+        when(userRepository.findByEmail(DEMO_EMAIL)).thenReturn(Optional.of(demo));
+        when(userRepository.findAll()).thenReturn(List.of(demo, other, alreadyOff));
+        stubEmptyDockerContainerList();
+
+        bootstrap.seed();
+
+        ArgumentCaptor<List<User>> saved = ArgumentCaptor.forClass(List.class);
+        verify(userRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).containsExactly(other);
+        assertThat(other.isEnabled()).isFalse();
+        assertThat(demo.isEnabled()).isTrue();
+    }
+
+    @Test
     void seedSwallowsDockerFailuresSoStartupIsNotAborted() {
         User existing = User.builder().username("demo").email(DEMO_EMAIL).role(Role.DEMO).build();
         when(userRepository.findByEmail(DEMO_EMAIL)).thenReturn(Optional.of(existing));

@@ -28,7 +28,8 @@ public class ActivityLogController {
             Authentication auth,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         User user = (User) auth.getPrincipal();
-        Page<ActivityLog> page = (user.getRole() == Role.ADMIN)
+        // DEMO shares the admin-wide view (read-only demo of the full screen).
+        Page<ActivityLog> page = (user.getRole() == Role.ADMIN || user.getRole() == Role.DEMO)
                 ? repository.findAll(pageable)
                 : repository.findByUserId(user.getId(), pageable);
         return PageResponse.from(page.map(ActivityLogDto::from));

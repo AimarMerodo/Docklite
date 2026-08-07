@@ -8,8 +8,9 @@ import { PageResponse } from './dashboard.service';
 
 export interface InvitationDto {
   id: number;
-  token: string;
-  url: string;
+  /** Null for the DEMO role — the backend masks the secret token/URL. */
+  token: string | null;
+  url: string | null;
   maxUses: number;
   usesRemaining: number;
   expiresAt: string;

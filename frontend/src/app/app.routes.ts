@@ -76,14 +76,14 @@ export const routes: Routes = [
       },
       {
         path: 'admin/users',
-        canActivate: [roleGuard(['ADMIN'])],
+        canActivate: [roleGuard(['ADMIN', 'DEMO'])],
         loadComponent: () =>
           import('@features/admin/users/users.page').then((m) => m.AdminUsersPage),
         title: 'DockLite | Usuarios',
       },
       {
         path: 'admin/invitations',
-        canActivate: [roleGuard(['ADMIN'])],
+        canActivate: [roleGuard(['ADMIN', 'DEMO'])],
         loadComponent: () =>
           import('@features/admin/invitations/invitations.page').then((m) => m.AdminInvitationsPage),
         title: 'DockLite | Invitaciones',

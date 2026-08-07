@@ -58,10 +58,11 @@ export class SidebarComponent {
   readonly year = new Date().getFullYear();
 
   readonly visibleGroups = computed<NavGroup[]>(() => {
-    const isAdmin = this.auth.isAdmin();
+    // DEMO sees the admin sections too (read-only demo of the full app).
+    const adminView = this.auth.isAdmin() || this.auth.isDemo();
     return NAV_GROUPS.map((g) => ({
       ...g,
-      items: g.items.filter((i) => !i.adminOnly || isAdmin),
+      items: g.items.filter((i) => !i.adminOnly || adminView),
     })).filter((g) => g.items.length > 0);
   });
 }

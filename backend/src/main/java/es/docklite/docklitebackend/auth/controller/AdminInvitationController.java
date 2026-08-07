@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/admin/invitations")
-@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 @Validated
 public class AdminInvitationController {
@@ -27,15 +26,24 @@ public class AdminInvitationController {
     private final InvitationService invitationService;
 
     @GetMapping
+    // DEMO gets the admin read-only view, but with tokens/URLs masked: an
+    // active invitation link would let an anonymous visitor register for real.
+    @PreAuthorize("hasAnyRole('ADMIN','DEMO')")
     public PageResponse<InvitationDto> list(
+            Authentication auth,
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "page must be >= 0") int page,
             @RequestParam(defaultValue = "20") @Min(value = 1, message = "size must be >= 1") @Max(value = 100, message = "size must be <= 100") int size) {
-        return PageResponse.from(
-                invitationService.listAll(PageRequest.of(page, size, Sort.by("id").descending()))
-        );
+        var invitations = invitationService.listAll(PageRequest.of(page, size, Sort.by("id").descending()));
+        boolean demo = auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_DEMO".equals(a.getAuthority()));
+        if (demo) {
+            invitations = invitations.map(InvitationDto::masked);
+        }
+        return PageResponse.from(invitations);
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public InvitationDto create(Authentication auth,
                                 @Valid @RequestBody CreateInvitationRequest req) {
@@ -43,6 +51,7 @@ public class AdminInvitationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancel(@PathVariable Long id) {
         invitationService.cancel(id);

@@ -34,7 +34,9 @@
 
       <button
         type="button"
-        class="inline-flex items-center gap-2 h-10 px-4.5 rounded-md bg-primary hover:bg-primary-hover text-on-primary transition-colors"
+        class="inline-flex items-center gap-2 h-10 px-4.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary transition-colors"
+        [disabled]="isDemo()"
+        [title]="isDemo() ? 'No disponible en modo demo' : ''"
         (click)="openCreate()"
       >
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -124,13 +126,14 @@
             <span class="text-[12px] text-ink-muted">{{ formatDate(inv.expiresAt) }}</span>
             <span class="text-[12px] text-ink-muted">{{ formatDate(inv.createdAt) }}</span>
             <div class="flex items-center gap-2 min-w-0">
-              <span class="font-mono text-[12px] text-ink-tertiary truncate">{{ inv.url }}</span>
+              <span class="font-mono text-[12px] text-ink-tertiary truncate">{{ inv.url ?? '•••••' }}</span>
             </div>
             <div class="flex items-center gap-1 md:justify-end">
               <button
                 type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink transition-colors"
-                title="Copiar URL"
+                class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                [disabled]="isDemo()"
+                [title]="isDemo() ? 'No disponible en modo demo' : 'Copiar URL'"
                 (click)="copyUrl(inv)"
               >
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -141,8 +144,9 @@
               @if (inv.active) {
                 <button
                   type="button"
-                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors"
-                  title="Cancelar invitación"
+                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  [disabled]="isDemo()"
+                  [title]="isDemo() ? 'No disponible en modo demo' : 'Cancelar invitación'"
                   (click)="confirmCancel(inv)"
                 >
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

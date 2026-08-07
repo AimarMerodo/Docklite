@@ -18,6 +18,12 @@ public record InvitationDto(
         Long createdBy,
         LocalDateTime createdAt
 ) {
+    /** Copy without the secret token/URL — what the read-only demo role sees. */
+    public InvitationDto masked() {
+        return new InvitationDto(id, null, null, maxUses, usesRemaining, expiresAt,
+                cancelled, expired, exhausted, active, createdBy, createdAt);
+    }
+
     public static InvitationDto from(Invitation inv, String publicUrl) {
         boolean expired = LocalDateTime.now().isAfter(inv.getExpiresAt());
         boolean exhausted = inv.getUsesRemaining() <= 0;

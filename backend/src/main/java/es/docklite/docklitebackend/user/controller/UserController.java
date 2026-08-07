@@ -44,7 +44,8 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    // DEMO gets the admin read-only view of this screen.
+    @PreAuthorize("hasAnyRole('ADMIN','DEMO')")
     public PageResponse<UserDto> list(
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "page must be >= 0") int page,
             @RequestParam(defaultValue = "20") @Min(value = 1, message = "size must be >= 1") @Max(value = 100, message = "size must be <= 100") int size) {
