@@ -23,6 +23,8 @@ export class ImagesPage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly confirm = inject(ConfirmService);
 
+  protected readonly isDemo = this.auth.isDemo;
+
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly images = signal<ImageSummary[]>([]);

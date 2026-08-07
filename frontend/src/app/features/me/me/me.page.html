@@ -47,6 +47,11 @@
       </dl>
     </section>
 
+    @if (isDemo()) {
+      <section class="rounded-lg border border-hairline bg-surface-1 p-5 text-sm text-ink-subtle">
+        El cambio de contraseña no está disponible en modo demo.
+      </section>
+    } @else {
     <section class="rounded-lg border border-hairline bg-surface-1">
       <header class="px-5 py-4 border-b border-hairline">
         <h2 class="text-[15px] font-medium text-ink">Cambiar contraseña</h2>
@@ -107,5 +112,6 @@
         </div>
       </form>
     </section>
+    }
   }
 </section>

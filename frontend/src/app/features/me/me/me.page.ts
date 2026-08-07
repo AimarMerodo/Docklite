@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@ang
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { UserDto, UserService } from '@core/api/user.service';
+import { AuthService } from '@core/auth/auth.service';
 import { ApiError } from '@core/http/error.interceptor';
 
 @Component({
@@ -14,6 +15,9 @@ import { ApiError } from '@core/http/error.interceptor';
 export class MePage implements OnInit {
   private readonly api = inject(UserService);
   private readonly fb = inject(FormBuilder);
+  private readonly auth = inject(AuthService);
+
+  protected readonly isDemo = this.auth.isDemo;
 
   protected readonly profile = signal<UserDto | null>(null);
   protected readonly loading = signal(false);

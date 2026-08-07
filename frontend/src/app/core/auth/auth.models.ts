@@ -1,4 +1,9 @@
-export type UserRole = 'USER' | 'ADMIN';
+export type UserRole = 'USER' | 'ADMIN' | 'DEMO';
+
+/** Response of GET /auth/demo — whether this deployment has demo mode on. */
+export interface DemoStatusDto {
+  enabled: boolean;
+}
 
 export interface AuthSession {
   accessToken: string;

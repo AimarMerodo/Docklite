@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { AuthService } from '@core/auth/auth.service';
 import { SidebarComponent } from '@shared/layout/sidebar/sidebar.component';
 import { TopbarComponent } from '@shared/layout/topbar/topbar.component';
 
@@ -14,4 +15,6 @@ import { TopbarComponent } from '@shared/layout/topbar/topbar.component';
     class: 'flex h-dvh w-full bg-canvas text-ink overflow-hidden',
   },
 })
-export class ShellComponent {}
+export class ShellComponent {
+  protected readonly auth = inject(AuthService);
+}
