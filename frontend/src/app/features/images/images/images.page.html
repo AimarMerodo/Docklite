@@ -34,7 +34,9 @@
 
       <button
         type="button"
-        class="inline-flex items-center gap-2 h-10 px-4.5 rounded-md bg-primary hover:bg-primary-hover text-on-primary transition-colors"
+        class="inline-flex items-center gap-2 h-10 px-4.5 rounded-md bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary transition-colors"
+        [disabled]="isDemo()"
+        [title]="isDemo() ? 'No disponible en modo demo' : ''"
         (click)="openPullModal()"
       >
         <svg

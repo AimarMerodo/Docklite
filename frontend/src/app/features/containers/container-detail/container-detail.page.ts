@@ -21,6 +21,7 @@ import {
 import { NetworkService, NetworkSummary } from '@core/api/network.service';
 import { VolumeService, VolumeSummary } from '@core/api/volume.service';
 import { ApiError } from '@core/http/error.interceptor';
+import { AuthService } from '@core/auth/auth.service';
 import { ConfirmService } from '@core/ui/confirm.service';
 import { StatusPillComponent } from '@shared/ui/status-pill/status-pill.component';
 import { InfoCellComponent } from '@features/containers/components/info-cell/info-cell.component';
@@ -46,6 +47,9 @@ function trimHistory(arr: number[]): number[] {
 })
 export class ContainerDetailPage implements OnInit, OnDestroy {
   private readonly api = inject(ContainerService);
+  private readonly auth = inject(AuthService);
+
+  protected readonly isDemo = this.auth.isDemo;
   private readonly titleService = inject(Title);
   private readonly volumeApi = inject(VolumeService);
   private readonly networkApi = inject(NetworkService);

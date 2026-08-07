@@ -25,6 +25,11 @@ app:
     username: ${ADMIN_USERNAME:}
     email: ${ADMIN_EMAIL:}
     password: ${ADMIN_PASSWORD:}
+  demo:
+    enabled: ${DEMO_MODE:false}
+    username: ${DEMO_USERNAME:demo}
+    email: ${DEMO_EMAIL:demo@docklite.local}
+    password: ${DEMO_PASSWORD:}   # blank = random at bootstrap (login is via POST /auth/demo)
   invitation:
     default-max-uses: 1
     default-expires-in-days: 7

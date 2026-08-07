@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 
 import { ContainerService, ContainerSummary } from '@core/api/container.service';
+import { AuthService } from '@core/auth/auth.service';
 import { ApiError } from '@core/http/error.interceptor';
 import { ContainerRowComponent, RowAction } from '@features/containers/components/container-row/container-row.component';
 import { CreateContainerWizard } from '@features/containers/components/create-wizard/create-wizard.component';
@@ -38,6 +39,9 @@ const FILTERABLE_STATES: StatusOption[] = [
 })
 export class ContainersPage implements OnInit {
   private readonly api = inject(ContainerService);
+  private readonly auth = inject(AuthService);
+
+  protected readonly isDemo = this.auth.isDemo;
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);

@@ -10,6 +10,9 @@ public final class SecurityMessages {
 
     public static final String ACCESS_DENIED = "Access denied";
 
+    // User-facing (the frontend shows backend messages verbatim), hence Spanish.
+    public static final String DEMO_READ_ONLY = "Modo demo: solo lectura";
+
     private SecurityMessages() {
         // utility class
     }

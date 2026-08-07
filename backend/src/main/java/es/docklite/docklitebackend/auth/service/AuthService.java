@@ -10,6 +10,7 @@ import es.docklite.docklitebackend.common.exception.AccountLockedException;
 import es.docklite.docklitebackend.common.exception.InvalidCredentialsException;
 import es.docklite.docklitebackend.user.entity.User;
 import es.docklite.docklitebackend.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,12 @@ public class AuthService {
 
     @Value("${jwt.expiration}")
     private long accessExpirationMs;
+
+    @Value("${app.demo.enabled:false}")
+    private boolean demoEnabled;
+
+    @Value("${app.demo.email:demo@docklite.local}")
+    private String demoEmail;
 
     public AuthResponse login(LoginRequest req) {
         if (loginAttempts.isLocked(req.email())) {
@@ -62,6 +69,24 @@ public class AuthService {
 
     public void logout(String refreshTokenValue) {
         refreshTokenService.revoke(refreshTokenValue);
+    }
+
+    public boolean isDemoEnabled() {
+        return demoEnabled;
+    }
+
+    /**
+     * Passwordless login as the demo user. Only available when demo mode is on;
+     * otherwise the endpoint behaves as if it didn't exist (404). The demo
+     * account is read-only (ROLE_DEMO), so handing out its session is safe.
+     */
+    public AuthResponse demoLogin() {
+        if (!demoEnabled) {
+            throw new EntityNotFoundException("Demo mode is not enabled");
+        }
+        User demo = userRepository.findByEmail(demoEmail)
+                .orElseThrow(() -> new EntityNotFoundException("Demo user not found"));
+        return buildAuthResponse(demo);
     }
 
     public AuthResponse buildAuthResponse(User user) {

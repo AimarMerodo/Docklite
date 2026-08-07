@@ -2,6 +2,7 @@ package es.docklite.docklitebackend.auth.controller;
 
 
 import es.docklite.docklitebackend.auth.dto.AuthResponse;
+import es.docklite.docklitebackend.auth.dto.DemoStatusDto;
 import es.docklite.docklitebackend.auth.dto.LoginRequest;
 import es.docklite.docklitebackend.auth.dto.RefreshTokenRequest;
 import es.docklite.docklitebackend.auth.service.AuthService;
@@ -31,5 +32,15 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@Valid @RequestBody RefreshTokenRequest req) {
         authService.logout(req.refreshToken());
+    }
+
+    @GetMapping("/demo")
+    public DemoStatusDto demoStatus() {
+        return new DemoStatusDto(authService.isDemoEnabled());
+    }
+
+    @PostMapping("/demo")
+    public AuthResponse demoLogin() {
+        return authService.demoLogin();
     }
 }

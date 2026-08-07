@@ -52,6 +52,9 @@ services:
       # Public URL used to build invitation links
       APP_PUBLIC_URL: ${APP_PUBLIC_URL}
 
+      # Read-only public demo (off by default; only the demo deployment sets it)
+      DEMO_MODE: ${DEMO_MODE:-false}
+
       # Explicit unix socket path inside the container
       DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
