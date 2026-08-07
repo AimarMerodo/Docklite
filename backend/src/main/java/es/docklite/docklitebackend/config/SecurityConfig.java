@@ -7,6 +7,7 @@ import es.docklite.docklitebackend.common.exception.JsonAuthenticationEntryPoint
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -58,6 +59,15 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/actuator/health"
                         ).permitAll()
+                        // Demo mode: any authenticated role may read, but mutations
+                        // (POST/PUT/PATCH/DELETE) require a real role — ROLE_DEMO stays
+                        // out. First matching rule wins, so /auth/** above keeps
+                        // login/refresh/logout working for the demo user.
+                        // NOTE: if a WebSocket endpoint (e.g. container exec) is ever
+                        // added, its handshake is a GET — it will need an explicit
+                        // hasAnyRole("ADMIN", "USER") rule here.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/**").authenticated()
+                        .requestMatchers("/api/v1/**").hasAnyRole("ADMIN", "USER")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(eh -> eh
