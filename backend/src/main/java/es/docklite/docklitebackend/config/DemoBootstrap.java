@@ -76,6 +76,7 @@ public class DemoBootstrap implements ApplicationRunner {
     public void seed() {
         try {
             User demoUser = ensureDemoUser();
+            disableNonDemoUsers();
             for (SeedSpec spec : SEED_CONTAINERS) {
                 ensureSeedContainer(spec, demoUser);
             }
@@ -84,6 +85,25 @@ public class DemoBootstrap implements ApplicationRunner {
             // An ApplicationRunner that throws would abort startup, and Docker
             // may simply not be ready yet — log and let the schedule retry.
             log.warn("Demo seed failed (will retry on next scheduled run): {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Kiosk guarantee: with demo mode on, the demo account is the ONLY one
+     * that can log in. Re-applied on every seed run, so accounts created
+     * through leftover invitations get disabled too. Reverting requires
+     * flipping users.enabled in the database — hence the loud log.
+     */
+    private void disableNonDemoUsers() {
+        List<User> disabled = userRepository.findAll().stream()
+                .filter(User::isEnabled)
+                .filter(u -> !demoEmail.equals(u.getEmail()))
+                .peek(u -> u.setEnabled(false))
+                .toList();
+        if (!disabled.isEmpty()) {
+            userRepository.saveAll(disabled);
+            log.warn("Demo mode disabled {} non-demo user account(s): {}", disabled.size(),
+                    disabled.stream().map(User::getUsername).toList());
         }
     }
 

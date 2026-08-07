@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } 
 import { FormsModule } from '@angular/forms';
 
 import { InvitationDto, InvitationService } from '@core/api/invitation.service';
+import { AuthService } from '@core/auth/auth.service';
 import { ApiError } from '@core/http/error.interceptor';
 import { ConfirmService } from '@core/ui/confirm.service';
 
@@ -17,6 +18,9 @@ type StatusFilter = 'all' | 'active' | 'inactive';
 export class AdminInvitationsPage implements OnInit {
   private readonly api = inject(InvitationService);
   private readonly confirm = inject(ConfirmService);
+  private readonly auth = inject(AuthService);
+
+  protected readonly isDemo = this.auth.isDemo;
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -126,6 +130,7 @@ export class AdminInvitationsPage implements OnInit {
   }
 
   protected async copyUrl(inv: InvitationDto): Promise<void> {
+    if (!inv.url) return; // masked for the demo role
     try {
       await navigator.clipboard.writeText(inv.url);
     } catch {
@@ -136,7 +141,7 @@ export class AdminInvitationsPage implements OnInit {
   protected async confirmCancel(inv: InvitationDto): Promise<void> {
     const ok = await this.confirm.ask({
       title: 'Cancelar invitación',
-      message: `Quieres cancelar la invitación con token "${inv.token.slice(0, 8)}…"? Si alguien ya tiene el enlace, dejará de funcionar.`,
+      message: `Quieres cancelar la invitación con token "${inv.token?.slice(0, 8) ?? '•••'}…"? Si alguien ya tiene el enlace, dejará de funcionar.`,
       variant: 'danger',
       confirmText: 'Cancelar invitación',
       cancelText: 'Volver',

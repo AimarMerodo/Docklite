@@ -122,8 +122,9 @@
               @if (!isSelf(u)) {
                 <button
                   type="button"
-                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-warning/15 hover:bg-warning/25 text-warning transition-colors"
-                  title="Resetear contraseña"
+                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-warning/15 hover:bg-warning/25 text-warning transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  [disabled]="isDemo()"
+                  [title]="isDemo() ? 'No disponible en modo demo' : 'Resetear contraseña'"
                   (click)="confirmResetPassword(u)"
                 >
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -133,14 +134,15 @@
                 </button>
                 <button
                   type="button"
-                  class="inline-flex items-center justify-center w-8 h-8 rounded transition-colors"
+                  class="inline-flex items-center justify-center w-8 h-8 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   [class.bg-danger\/15]="u.enabled"
                   [class.hover:bg-danger\/25]="u.enabled"
                   [class.text-danger]="u.enabled"
                   [class.bg-success\/15]="!u.enabled"
                   [class.hover:bg-success\/25]="!u.enabled"
                   [class.text-success]="!u.enabled"
-                  [title]="u.enabled ? 'Deshabilitar' : 'Habilitar'"
+                  [disabled]="isDemo()"
+                  [title]="isDemo() ? 'No disponible en modo demo' : (u.enabled ? 'Deshabilitar' : 'Habilitar')"
                   (click)="toggleEnabled(u)"
                 >
                   @if (u.enabled) {

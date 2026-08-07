@@ -24,6 +24,7 @@ export class AdminUsersPage implements OnInit {
   protected readonly resetResult = signal<PasswordResetResponse | null>(null);
 
   protected readonly currentUsername = this.auth.username;
+  protected readonly isDemo = this.auth.isDemo;
 
   protected readonly filtered = computed<UserDto[]>(() => {
     const q = this.search().trim().toLowerCase();
