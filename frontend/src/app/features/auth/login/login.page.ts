@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -12,7 +12,7 @@ import { ApiError } from '@core/http/error.interceptor';
   templateUrl: './login.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -20,11 +20,35 @@ export class LoginPage {
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly demoEnabled = signal(false);
+  protected readonly demoLoading = signal(false);
 
   protected readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
+
+  ngOnInit(): void {
+    // Older backends without the endpoint (404) simply keep the button hidden.
+    this.auth.demoStatus().subscribe({
+      next: (status) => this.demoEnabled.set(status.enabled),
+      error: () => this.demoEnabled.set(false),
+    });
+  }
+
+  tryDemo(): void {
+    if (this.demoLoading()) return;
+    this.demoLoading.set(true);
+    this.errorMessage.set(null);
+
+    this.auth.loginDemo().subscribe({
+      next: () => void this.router.navigateByUrl('/dashboard'),
+      error: () => {
+        this.demoLoading.set(false);
+        this.errorMessage.set('No se pudo iniciar la demo. Inténtalo de nuevo.');
+      },
+    });
+  }
 
   submit(): void {
     if (this.form.invalid || this.loading()) return;

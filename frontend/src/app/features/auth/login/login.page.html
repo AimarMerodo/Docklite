@@ -64,6 +64,22 @@
           {{ loading() ? 'Entrando…' : 'Entrar' }}
         </button>
       </form>
+
+      @if (demoEnabled()) {
+        <div class="mt-4 pt-4 border-t border-hairline">
+          <button
+            type="button"
+            (click)="tryDemo()"
+            [disabled]="demoLoading() || loading()"
+            class="w-full h-10 rounded-md border border-hairline-strong bg-surface-2 hover:bg-surface-3 disabled:opacity-50 text-ink text-sm font-medium transition-colors"
+          >
+            {{ demoLoading() ? 'Entrando…' : 'Probar demo' }}
+          </button>
+          <p class="mt-2 text-center text-xs text-ink-tertiary">
+            Acceso de solo lectura, sin registro.
+          </p>
+        </div>
+      }
     </div>
 
     <p class="mt-6 text-center text-xs text-ink-tertiary">

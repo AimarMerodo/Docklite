@@ -9,6 +9,7 @@ import {
   AcceptInviteRequest,
   AuthResponseDto,
   AuthSession,
+  DemoStatusDto,
   InvitationAcceptResponseDto,
   InvitationSummary,
   LoginRequest,
@@ -29,6 +30,7 @@ export class AuthService {
   readonly username = computed(() => this._session()?.username ?? null);
   readonly role = computed<UserRole | null>(() => this._session()?.role ?? null);
   readonly isAdmin = computed(() => this.role() === 'ADMIN');
+  readonly isDemo = computed(() => this.role() === 'DEMO');
 
   /**
    * In-flight refresh shared between concurrent 401-driven retries.
@@ -49,6 +51,21 @@ export class AuthService {
   login(payload: LoginRequest): Observable<AuthSession> {
     return this.http
       .post<AuthResponseDto>(`${this.base}/auth/login`, payload)
+      .pipe(
+        map((dto) => this.fromAuthDto(dto)),
+        tap((session) => this.persist(session)),
+      );
+  }
+
+  /** Whether this deployment has demo mode enabled (drives the login button). */
+  demoStatus(): Observable<DemoStatusDto> {
+    return this.http.get<DemoStatusDto>(`${this.base}/auth/demo`);
+  }
+
+  /** Passwordless login as the read-only demo user. */
+  loginDemo(): Observable<AuthSession> {
+    return this.http
+      .post<AuthResponseDto>(`${this.base}/auth/demo`, {})
       .pipe(
         map((dto) => this.fromAuthDto(dto)),
         tap((session) => this.persist(session)),

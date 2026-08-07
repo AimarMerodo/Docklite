@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } 
 import { FormsModule } from '@angular/forms';
 
 import { VolumeService, VolumeSummary } from '@core/api/volume.service';
+import { AuthService } from '@core/auth/auth.service';
 import { humanizeDeleteError } from '@core/http/error-messages';
 import { ApiError } from '@core/http/error.interceptor';
 import { ConfirmService } from '@core/ui/confirm.service';
@@ -16,6 +17,9 @@ import { ConfirmService } from '@core/ui/confirm.service';
 export class VolumesPage implements OnInit {
   private readonly api = inject(VolumeService);
   private readonly confirm = inject(ConfirmService);
+  private readonly auth = inject(AuthService);
+
+  protected readonly isDemo = this.auth.isDemo;
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);

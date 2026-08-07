@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { Router } from '@angular/router';
 
 import { ContainerSummary } from '@core/api/container.service';
+import { AuthService } from '@core/auth/auth.service';
 import { StatusPillComponent } from '@shared/ui/status-pill/status-pill.component';
 
 export type RowAction = 'terminal' | 'start' | 'stop' | 'restart';
@@ -24,6 +25,9 @@ export type RowAction = 'terminal' | 'start' | 'stop' | 'restart';
 })
 export class ContainerRowComponent {
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+
+  protected readonly isDemo = this.auth.isDemo;
 
   readonly container = input.required<ContainerSummary>();
   readonly pending = input<RowAction | null>(null);
