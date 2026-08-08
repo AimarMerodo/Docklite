@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, inject, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '@core/auth/auth.service';
@@ -18,6 +18,9 @@ export class TopbarComponent {
   private readonly host = inject(ElementRef<HTMLElement>);
 
   protected readonly menuOpen = signal(false);
+
+  /** Emitted by the mobile hamburger so the shell can open the nav drawer. */
+  readonly menuToggle = output<void>();
 
   protected readonly initial = (): string =>
     (this.auth.username() ?? '?').slice(0, 1).toUpperCase();

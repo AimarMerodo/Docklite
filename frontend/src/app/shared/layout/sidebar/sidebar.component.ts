@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '@core/auth/auth.service';
@@ -49,14 +49,18 @@ const NAV_GROUPS: NavGroup[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     role: 'complementary',
-    class:
-      'hidden md:flex md:w-60 shrink-0 flex-col border-r border-hairline bg-surface-1',
+    // Display (hidden/flex per viewport) is decided by the host that embeds
+    // the sidebar: static column on desktop, overlay drawer on mobile.
+    class: 'w-60 shrink-0 flex-col border-r border-hairline bg-surface-1',
   },
 })
 export class SidebarComponent {
   private readonly auth = inject(AuthService);
   readonly year = new Date().getFullYear();
   readonly isDemo = this.auth.isDemo;
+
+  /** Emitted on nav link click so the mobile drawer can close itself. */
+  readonly navigated = output<void>();
 
   readonly visibleGroups = computed<NavGroup[]>(() => {
     // DEMO sees the admin sections too (read-only demo of the full app).

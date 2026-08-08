@@ -733,7 +733,7 @@
                     @if (editingMountIndex() === i) {
                       <button
                         type="button"
-                        class="inline-flex items-center justify-center w-8 h-8 rounded bg-success/20 hover:bg-success/30 text-success transition-colors disabled:opacity-50"
+                        class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-success/20 hover:bg-success/30 text-success transition-colors disabled:opacity-50"
                         [disabled]="mountSaving()"
                         title="Guardar cambios"
                         (click)="saveEditMount()"
@@ -753,7 +753,7 @@
                       </button>
                       <button
                         type="button"
-                        class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink transition-colors"
+                        class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink transition-colors"
                         [disabled]="mountSaving()"
                         title="Cancelar"
                         (click)="cancelEditMount()"
@@ -774,7 +774,7 @@
                     } @else if (canEditMounts() && m.type === 'volume') {
                       <button
                         type="button"
-                        class="inline-flex items-center justify-center w-8 h-8 rounded bg-primary/15 hover:bg-primary/25 text-primary transition-colors disabled:opacity-50"
+                        class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-primary/15 hover:bg-primary/25 text-primary transition-colors disabled:opacity-50"
                         [disabled]="isDemo() || mountSaving() || editingMountIndex() !== null"
                         title="Editar volumen (recreará el contenedor)"
                         (click)="startEditMount(i, m)"
@@ -795,7 +795,7 @@
                       </button>
                       <button
                         type="button"
-                        class="inline-flex items-center justify-center w-8 h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-50"
+                        class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-50"
                         [disabled]="isDemo() || mountSaving() || editingMountIndex() !== null"
                         title="Quitar volumen (recreará el contenedor)"
                         (click)="confirmRemoveMount(m)"
@@ -964,7 +964,7 @@
                     </div>
                     <button
                       type="button"
-                      class="inline-flex items-center justify-center w-8 h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-50 shrink-0"
+                      class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-50 shrink-0"
                       [disabled]="isDemo() || networkSaving()"
                       title="Desconectar de esta red"
                       (click)="confirmDisconnectNetwork(net.name)"
@@ -1223,7 +1223,7 @@
                         </select>
                         <button
                           type="button"
-                          class="inline-flex items-center justify-center w-7 h-7 rounded bg-success/20 hover:bg-success/30 text-success disabled:opacity-50"
+                          class="inline-flex items-center justify-center w-10 h-10 md:w-7 md:h-7 rounded bg-success/20 hover:bg-success/30 text-success disabled:opacity-50"
                           [disabled]="portSaving() || !!editPortConflict()"
                           [title]="editPortConflict() ? ('Puerto ya en uso por ' + editPortConflict()) : 'Guardar'"
                           (click)="saveEditPort(p)"
@@ -1243,7 +1243,7 @@
                         </button>
                         <button
                           type="button"
-                          class="inline-flex items-center justify-center w-7 h-7 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink"
+                          class="inline-flex items-center justify-center w-10 h-10 md:w-7 md:h-7 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink"
                           [disabled]="portSaving()"
                           title="Cancelar"
                           (click)="cancelEditPort()"
@@ -1286,7 +1286,7 @@
                         @if (canEditPorts()) {
                           <button
                             type="button"
-                            class="inline-flex items-center justify-center w-7 h-7 rounded text-primary hover:opacity-70 transition-opacity disabled:opacity-50"
+                            class="inline-flex items-center justify-center w-10 h-10 md:w-7 md:h-7 rounded text-primary hover:opacity-70 transition-opacity disabled:opacity-50"
                             [disabled]="isDemo() || portSaving() || editingPortKey() !== null"
                             title="Editar este mapeo"
                             (click)="startEditPort(p)"
@@ -1307,7 +1307,7 @@
                           </button>
                           <button
                             type="button"
-                            class="inline-flex items-center justify-center w-7 h-7 rounded text-danger hover:opacity-70 transition-opacity disabled:opacity-50"
+                            class="inline-flex items-center justify-center w-10 h-10 md:w-7 md:h-7 rounded text-danger hover:opacity-70 transition-opacity disabled:opacity-50"
                             [disabled]="isDemo() || portSaving() || editingPortKey() !== null"
                             title="Quitar este mapeo"
                             (click)="confirmRemovePort(p)"
@@ -1581,7 +1581,7 @@
                     />
                     <button
                       type="button"
-                      class="inline-flex items-center justify-center w-8 h-8 rounded text-ink-tertiary hover:text-danger transition-colors"
+                      class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded text-ink-tertiary hover:text-danger transition-colors"
                       title="Quitar"
                       (click)="removeEnvRow(i)"
                     >
