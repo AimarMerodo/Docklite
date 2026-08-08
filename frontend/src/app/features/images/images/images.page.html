@@ -72,6 +72,7 @@
       [value]="search()"
       (input)="onSearchInput($event)"
       placeholder="Buscar por tag o id"
+      aria-label="Buscar imágenes"
       class="w-full h-10 pl-10 pr-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm text-ink"
     />
     <svg
@@ -170,6 +171,7 @@
                   type="button"
                   class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors"
                   title="Eliminar imagen"
+                  aria-label="Eliminar imagen"
                   (click)="confirmRemove(img)"
                 >
                   <svg

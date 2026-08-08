@@ -46,6 +46,7 @@
       [value]="search()"
       (input)="onSearchInput($event)"
       placeholder="Buscar por usuario o email"
+      aria-label="Buscar usuarios"
       class="w-full h-10 pl-10 pr-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm text-ink"
     />
     <svg
@@ -125,6 +126,7 @@
                   class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-warning/15 hover:bg-warning/25 text-warning transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   [disabled]="isDemo()"
                   [title]="isDemo() ? 'No disponible en modo demo' : 'Resetear contraseña'"
+                  aria-label="Resetear contraseña"
                   (click)="confirmResetPassword(u)"
                 >
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -143,6 +145,7 @@
                   [class.text-success]="!u.enabled"
                   [disabled]="isDemo()"
                   [title]="isDemo() ? 'No disponible en modo demo' : (u.enabled ? 'Deshabilitar' : 'Habilitar')"
+                  [attr.aria-label]="u.enabled ? 'Deshabilitar usuario' : 'Habilitar usuario'"
                   (click)="toggleEnabled(u)"
                 >
                   @if (u.enabled) {

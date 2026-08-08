@@ -10,7 +10,10 @@ import { ThemeService } from '@core/theme/theme.service';
   imports: [RouterLink],
   templateUrl: './topbar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block shrink-0' },
+  host: {
+    class: 'block shrink-0',
+    '(document:keydown.escape)': 'menuOpen.set(false)',
+  },
 })
 export class TopbarComponent {
   protected readonly auth = inject(AuthService);
