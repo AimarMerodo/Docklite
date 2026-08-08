@@ -156,6 +156,17 @@
   }
 </nav>
 
+@if (isDemo()) {
+  <div
+    role="status"
+    class="mx-3 mb-3 shrink-0 rounded-md border border-warning/40 bg-warning/15 px-3 py-2"
+    title="Modo demo: solo lectura — las acciones de escritura están deshabilitadas."
+  >
+    <p class="text-xs font-medium text-warning">Modo demo</p>
+    <p class="text-[11px] text-ink-subtle">Solo lectura</p>
+  </div>
+}
+
 <div
   class="px-4 py-3 shrink-0 border-t border-hairline text-[12px] text-ink-tertiary"
 >

@@ -56,6 +56,7 @@ const NAV_GROUPS: NavGroup[] = [
 export class SidebarComponent {
   private readonly auth = inject(AuthService);
   readonly year = new Date().getFullYear();
+  readonly isDemo = this.auth.isDemo;
 
   readonly visibleGroups = computed<NavGroup[]>(() => {
     // DEMO sees the admin sections too (read-only demo of the full app).
