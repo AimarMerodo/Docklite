@@ -20,6 +20,7 @@
               [routerLink]="item.path"
               routerLinkActive
               #rla="routerLinkActive"
+              (click)="navigated.emit()"
               class="flex items-center gap-2.5 h-10 px-3 rounded-md text-sm transition-colors"
               [class.bg-surface-2]="rla.isActive"
               [class.text-ink]="rla.isActive"

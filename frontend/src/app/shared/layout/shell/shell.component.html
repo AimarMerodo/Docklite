@@ -1,7 +1,25 @@
-<app-sidebar />
+<app-sidebar class="hidden md:flex" />
 <div class="flex-1 flex flex-col min-w-0">
-  <app-topbar />
+  <app-topbar (menuToggle)="mobileNavOpen.set(true)" />
   <main class="flex-1 overflow-y-auto overflow-x-hidden">
     <router-outlet />
   </main>
 </div>
+
+@if (mobileNavOpen()) {
+  <div class="fixed inset-0 z-40 md:hidden">
+    <div
+      class="absolute inset-0 bg-overlay"
+      (click)="mobileNavOpen.set(false)"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="absolute inset-y-0 left-0"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Navegación"
+    >
+      <app-sidebar class="flex h-full" (navigated)="mobileNavOpen.set(false)" />
+    </div>
+  </div>
+}

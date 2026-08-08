@@ -122,7 +122,7 @@
               @if (!isSelf(u)) {
                 <button
                   type="button"
-                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-warning/15 hover:bg-warning/25 text-warning transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-warning/15 hover:bg-warning/25 text-warning transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   [disabled]="isDemo()"
                   [title]="isDemo() ? 'No disponible en modo demo' : 'Resetear contraseña'"
                   (click)="confirmResetPassword(u)"
@@ -134,7 +134,7 @@
                 </button>
                 <button
                   type="button"
-                  class="inline-flex items-center justify-center w-8 h-8 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   [class.bg-danger\/15]="u.enabled"
                   [class.hover:bg-danger\/25]="u.enabled"
                   [class.text-danger]="u.enabled"

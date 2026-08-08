@@ -15,7 +15,7 @@ export type RowAction = 'terminal' | 'start' | 'stop' | 'restart';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class:
-      'flex items-center gap-4 px-5 h-16 border-b border-hairline last:border-b-0 cursor-pointer hover:bg-surface-2 transition-colors',
+      'flex flex-col md:flex-row md:items-center gap-2.5 md:gap-4 px-4 md:px-5 py-3 md:py-0 md:h-16 border-b border-hairline last:border-b-0 cursor-pointer hover:bg-surface-2 transition-colors',
     role: 'button',
     tabindex: '0',
     '(click)': 'goToDetail()',
