@@ -120,3 +120,16 @@ body {
   width: 0 !important;
   height: 0 !important;
 }
+
+/* Reduced motion: intentional alternatives, not a blanket kill. Spinners keep
+   communicating "loading" (slower); the pulse becomes a static dimmed state. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin {
+    animation-duration: 2.5s;
+  }
+
+  .animate-pulse {
+    animation: none;
+    opacity: 0.65;
+  }
+}

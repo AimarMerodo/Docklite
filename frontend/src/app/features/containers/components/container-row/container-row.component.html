@@ -36,6 +36,7 @@
       type="button"
       class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-surface-2 hover:bg-surface-3 text-ink-muted hover:text-ink transition-colors"
       title="Ver detalle"
+      aria-label="Ver detalle"
       (click)="$event.stopPropagation(); goToDetail()"
     >
       <svg
@@ -57,6 +58,7 @@
       class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-success/15 hover:bg-success/25 text-success transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       [disabled]="isDemo() || isRunning() || pending() === 'start'"
       [title]="isDemo() ? 'No disponible en modo demo' : 'Arrancar'"
+      aria-label="Arrancar contenedor"
       (click)="$event.stopPropagation(); action.emit('start')"
     >
       <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
@@ -69,6 +71,7 @@
       class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-warning/15 hover:bg-warning/25 text-warning transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       [disabled]="isDemo() || !isRunning() || pending() === 'restart'"
       [title]="isDemo() ? 'No disponible en modo demo' : 'Reiniciar'"
+      aria-label="Reiniciar contenedor"
       (click)="$event.stopPropagation(); action.emit('restart')"
     >
       <svg
@@ -91,6 +94,7 @@
       class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
       [disabled]="isDemo() || !isRunning() || pending() === 'stop'"
       [title]="isDemo() ? 'No disponible en modo demo' : 'Detener'"
+      aria-label="Detener contenedor"
       (click)="$event.stopPropagation(); action.emit('stop')"
     >
       <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">

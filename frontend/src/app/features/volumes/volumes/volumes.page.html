@@ -71,6 +71,7 @@
       [value]="search()"
       (input)="onSearchInput($event)"
       placeholder="Buscar por nombre"
+      aria-label="Buscar volúmenes"
       class="w-full h-10 pl-10 pr-3 rounded-md bg-surface-1 border border-hairline focus:border-primary-focus outline-none text-sm text-ink"
     />
     <svg
@@ -142,6 +143,7 @@
                 class="inline-flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded bg-danger/15 hover:bg-danger/25 text-danger transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 [disabled]="isDemo()"
                 [title]="isDemo() ? 'No disponible en modo demo' : 'Eliminar volumen'"
+                aria-label="Eliminar volumen"
                 (click)="confirmRemove(vol)"
               >
                 <svg
