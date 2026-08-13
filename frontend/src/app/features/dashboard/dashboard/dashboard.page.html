@@ -28,11 +28,16 @@
         >
           {{ card.label }}
         </p>
-        <p
-          class="mt-auto text-[28px] md:text-[40px] leading-none font-semibold tracking-[-1px] tabular-nums"
-        >
-          {{ card.value }}
-        </p>
+        @if (loading()) {
+          <div class="skeleton mt-auto h-7 w-12 md:h-10 md:w-16" aria-hidden="true"></div>
+          <span class="sr-only">Cargando…</span>
+        } @else {
+          <p
+            class="mt-auto text-[28px] md:text-[40px] leading-none font-semibold tracking-[-1px] tabular-nums"
+          >
+            {{ card.value }}
+          </p>
+        }
         <p class="hidden md:block mt-2 min-h-[16px] text-xs text-ink-subtle">
           {{ card.hint }}
         </p>

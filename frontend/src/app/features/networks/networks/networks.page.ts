@@ -16,6 +16,8 @@ import { PageHeaderComponent } from '@shared/ui/page-header/page-header.componen
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NetworksPage implements OnInit {
+  protected readonly skeletonRows = [0, 1, 2];
+
   private readonly api = inject(NetworkService);
   private readonly confirm = inject(ConfirmService);
   private readonly auth = inject(AuthService);

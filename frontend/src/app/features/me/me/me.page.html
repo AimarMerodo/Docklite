@@ -9,9 +9,30 @@
   </header>
 
   @if (loading() && !profile()) {
-    <div class="rounded-lg border border-hairline bg-surface-1 p-8 text-sm text-ink-subtle">
-      Cargando perfil…
+    <!-- Skeletons mirroring the two profile cards below. -->
+    <div aria-hidden="true">
+      <section class="rounded-lg border border-hairline bg-surface-1 mb-6">
+        <header class="px-5 py-4 border-b border-hairline">
+          <div class="skeleton h-4 w-32"></div>
+        </header>
+        <div class="p-5 grid grid-cols-3 gap-y-3 gap-x-4">
+          @for (i of [0, 1, 2, 3, 4]; track i) {
+            <div class="skeleton h-3 w-20 self-center"></div>
+            <div class="skeleton h-4 w-40 col-span-2"></div>
+          }
+        </div>
+      </section>
+      <section class="rounded-lg border border-hairline bg-surface-1">
+        <header class="px-5 py-4 border-b border-hairline">
+          <div class="skeleton h-4 w-40"></div>
+        </header>
+        <div class="p-5 flex flex-col gap-4">
+          <div class="skeleton h-10 w-full rounded-md"></div>
+          <div class="skeleton h-10 w-full rounded-md"></div>
+        </div>
+      </section>
     </div>
+    <span class="sr-only">Cargando perfil…</span>
   } @else if (profile(); as me) {
     <section class="rounded-lg border border-hairline bg-surface-1 mb-6">
       <header class="px-5 py-4 border-b border-hairline">

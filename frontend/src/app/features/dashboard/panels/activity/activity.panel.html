@@ -5,18 +5,27 @@
 </header>
 
 @if (loading()) {
-  <div class="px-5 py-6 text-sm text-ink-subtle">Cargando…</div>
+  <ul class="min-h-56 divide-y divide-hairline-tertiary" aria-hidden="true">
+    @for (i of skeletonRows; track i) {
+      <li class="flex items-center gap-3 px-5 h-11">
+        <div class="skeleton h-[22px] w-20 rounded-full"></div>
+        <div class="skeleton h-3 w-24"></div>
+        <div class="skeleton ml-auto h-3 w-14"></div>
+      </li>
+    }
+  </ul>
+  <span class="sr-only">Cargando…</span>
 } @else if (entries().length === 0) {
-  <div class="px-5 py-8 text-center">
+  <div class="min-h-56 px-5 py-8 text-center flex flex-col justify-center">
     <p class="text-sm text-ink">Sin actividad todavía</p>
     <p class="mt-1 text-xs text-ink-subtle">
       Crea un contenedor para verla aquí.
     </p>
   </div>
 } @else {
-  <ul class="divide-y divide-hairline-tertiary">
+  <ul class="min-h-56 divide-y divide-hairline-tertiary">
     @for (entry of entries(); track entry.id) {
-      <li class="flex items-center gap-3 px-5 py-2.5 text-sm">
+      <li class="flex items-center gap-3 px-5 h-11 text-sm">
         <span
           class="inline-flex items-center px-2 py-0.5 rounded-pill text-[11px] tracking-wide font-medium uppercase border border-hairline-strong text-ink-muted shrink-0"
         >

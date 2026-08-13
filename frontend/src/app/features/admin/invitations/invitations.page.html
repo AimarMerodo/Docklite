@@ -69,11 +69,7 @@
     }
   </div>
 
-  @if (loading() && invitations().length === 0) {
-    <div class="rounded-lg border border-hairline bg-surface-1 p-8 text-sm text-ink-subtle">
-      Cargando invitaciones…
-    </div>
-  } @else if (filtered().length === 0) {
+  @if (!loading() && filtered().length === 0) {
     <div class="rounded-lg border border-hairline bg-surface-1 p-12 text-center text-sm text-ink-subtle">
       @if (invitations().length === 0) {
         No hay invitaciones todavía. Pulsa <span class="text-ink">Nueva invitación</span>.
@@ -98,6 +94,26 @@
         <span>URL</span>
         <span class="text-right">Acciones</span>
       </div>
+      @if (loading() && invitations().length === 0) {
+        <ul class="divide-y divide-hairline-tertiary" aria-hidden="true">
+          @for (i of skeletonRows; track i) {
+            <li
+              class="grid grid-cols-[110px_120px_120px_140px_1fr_120px] gap-x-4 px-5 py-3 items-center"
+            >
+              <div class="skeleton h-5 w-16"></div>
+              <div class="skeleton h-3 w-12"></div>
+              <div class="skeleton h-3 w-16"></div>
+              <div class="skeleton h-3 w-16"></div>
+              <div class="skeleton h-3 w-2/3"></div>
+              <div class="flex items-center gap-1 justify-end">
+                <div class="skeleton h-8 w-8"></div>
+                <div class="skeleton h-8 w-8"></div>
+              </div>
+            </li>
+          }
+        </ul>
+        <span class="sr-only">Cargando…</span>
+      } @else {
       <ul class="divide-y divide-hairline-tertiary">
         @for (inv of filtered(); track inv.id) {
           <li
@@ -158,6 +174,7 @@
           </li>
         }
       </ul>
+      }
       </div>
     </section>
   }

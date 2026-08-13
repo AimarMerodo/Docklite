@@ -15,6 +15,8 @@ export class ActivityPanel {
   readonly entries = input<ActivityEntry[]>([]);
   readonly loading = input(false);
 
+  protected readonly skeletonRows = [0, 1, 2, 3, 4];
+
   protected shortId(id: string): string {
     if (!id) return '';
     return id.startsWith('sha256:') ? id.slice(7, 19) : id.slice(0, 12);

@@ -16,6 +16,8 @@ export class RecentImagesPanel {
   readonly loading = input(false);
   readonly limit = input(5);
 
+  protected readonly skeletonRows = [0, 1, 2, 3, 4];
+
   readonly visible = computed(() => {
     const sorted = [...this.images()].sort(
       (a, b) => parseInt(b.created || '0', 10) - parseInt(a.created || '0', 10),

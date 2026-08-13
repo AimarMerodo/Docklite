@@ -5,11 +5,15 @@
 </header>
 
 @if (loading()) {
-  <div
-    class="flex-1 flex items-center justify-center px-5 py-6 text-sm text-ink-subtle"
-  >
-    Cargando…
+  <div class="px-5 py-3 divide-y divide-hairline-tertiary" aria-hidden="true">
+    @for (i of skeletonRows; track i) {
+      <div class="flex items-center justify-between h-11">
+        <div class="skeleton h-3 w-24"></div>
+        <div class="skeleton h-4 w-36"></div>
+      </div>
+    }
   </div>
+  <span class="sr-only">Cargando…</span>
 } @else if (info() === null) {
   <div
     class="flex-1 flex items-center justify-center px-5 py-6 text-sm text-ink-subtle"
@@ -19,7 +23,7 @@
 } @else {
   <dl class="px-5 py-3 divide-y divide-hairline-tertiary">
     @for (row of rows(); track row.label) {
-      <div class="flex items-center justify-between py-2.5 text-sm">
+      <div class="flex items-center justify-between h-11 text-sm">
         <dt
           class="text-[13px] font-medium tracking-[0.4px] uppercase text-ink-tertiary"
         >

@@ -13,16 +13,25 @@
 </header>
 
 @if (loading()) {
-  <div class="px-5 py-6 text-sm text-ink-subtle">Cargando…</div>
+  <ul class="min-h-56 divide-y divide-hairline-tertiary" aria-hidden="true">
+    @for (i of skeletonRows; track i) {
+      <li class="flex items-center gap-3 px-5 h-11">
+        <div class="skeleton h-4 flex-1 max-w-56"></div>
+        <div class="skeleton h-3 w-24"></div>
+        <div class="skeleton h-3 w-12"></div>
+      </li>
+    }
+  </ul>
+  <span class="sr-only">Cargando…</span>
 } @else if (visible().length === 0) {
-  <div class="px-5 py-8 text-center">
+  <div class="min-h-56 px-5 py-8 text-center flex flex-col justify-center">
     <p class="text-sm text-ink">Sin imágenes</p>
     <p class="mt-1 text-xs text-ink-subtle">Pull una imagen para verla aquí.</p>
   </div>
 } @else {
-  <ul class="divide-y divide-hairline-tertiary">
+  <ul class="min-h-56 divide-y divide-hairline-tertiary">
     @for (img of visible(); track img.id) {
-      <li class="flex items-center gap-3 px-5 py-2.5 text-sm">
+      <li class="flex items-center gap-3 px-5 h-11 text-sm">
         <span class="flex-1 min-w-0 truncate text-ink">
           {{ primaryTag(img) }}
         </span>

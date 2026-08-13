@@ -17,6 +17,8 @@ export class ContainerStatusPanel {
   readonly loading = input(false);
   readonly limit = input(5);
 
+  protected readonly skeletonRows = [0, 1, 2, 3, 4];
+
   readonly visible = computed(() => {
     const sorted = [...this.containers()].sort(
       (a, b) => statePriority(a.state) - statePriority(b.state),
