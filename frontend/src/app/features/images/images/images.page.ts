@@ -10,11 +10,12 @@ import {
 import { humanizeDeleteError } from '@core/http/error-messages';
 import { ApiError } from '@core/http/error.interceptor';
 import { ConfirmService } from '@core/ui/confirm.service';
+import { PageHeaderComponent } from '@shared/ui/page-header/page-header.component';
 
 @Component({
   selector: 'app-images-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PageHeaderComponent],
   templateUrl: './images.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

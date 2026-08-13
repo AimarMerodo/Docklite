@@ -6,6 +6,9 @@
     <ng-content />
   </span>
 </header>
-<p [class]="valueClasses()" class="text-[32px] font-bold leading-none tabular-nums">
+<p
+  [class]="valueClasses()"
+  class="text-[24px] md:text-[32px] font-bold leading-none tabular-nums"
+>
   {{ value() }}
 </p>

@@ -4,10 +4,12 @@ import { AuthService } from '@core/auth/auth.service';
 import { PasswordResetResponse, UserDto, UserService } from '@core/api/user.service';
 import { ApiError } from '@core/http/error.interceptor';
 import { ConfirmService } from '@core/ui/confirm.service';
+import { PageHeaderComponent } from '@shared/ui/page-header/page-header.component';
 
 @Component({
   selector: 'app-admin-users-page',
   standalone: true,
+  imports: [PageHeaderComponent],
   templateUrl: './users.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

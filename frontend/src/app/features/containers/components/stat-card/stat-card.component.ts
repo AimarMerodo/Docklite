@@ -9,7 +9,7 @@ export type StatVariant = 'accent' | 'success' | 'muted' | 'neutral';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class:
-      'flex flex-col gap-3 rounded-lg border border-hairline bg-surface-1 px-5 py-4',
+      'flex flex-col gap-2 md:gap-3 rounded-lg border border-hairline bg-surface-1 px-4 py-3 md:px-5 md:py-4',
   },
 })
 export class StatCardComponent {

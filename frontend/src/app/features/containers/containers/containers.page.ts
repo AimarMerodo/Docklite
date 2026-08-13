@@ -6,6 +6,7 @@ import { ApiError } from '@core/http/error.interceptor';
 import { ContainerRowComponent, RowAction } from '@features/containers/components/container-row/container-row.component';
 import { CreateContainerWizard } from '@features/containers/components/create-wizard/create-wizard.component';
 import { StatCardComponent } from '@features/containers/components/stat-card/stat-card.component';
+import { PageHeaderComponent } from '@shared/ui/page-header/page-header.component';
 
 interface ContainerStats {
   total: number;
@@ -33,7 +34,12 @@ const FILTERABLE_STATES: StatusOption[] = [
 @Component({
   selector: 'app-containers-page',
   standalone: true,
-  imports: [StatCardComponent, ContainerRowComponent, CreateContainerWizard],
+  imports: [
+    StatCardComponent,
+    ContainerRowComponent,
+    CreateContainerWizard,
+    PageHeaderComponent,
+  ],
   templateUrl: './containers.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

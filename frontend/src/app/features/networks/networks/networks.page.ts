@@ -6,11 +6,12 @@ import { AuthService } from '@core/auth/auth.service';
 import { humanizeDeleteError } from '@core/http/error-messages';
 import { ApiError } from '@core/http/error.interceptor';
 import { ConfirmService } from '@core/ui/confirm.service';
+import { PageHeaderComponent } from '@shared/ui/page-header/page-header.component';
 
 @Component({
   selector: 'app-networks-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PageHeaderComponent],
   templateUrl: './networks.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
