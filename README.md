@@ -2,7 +2,7 @@
 
 **DockLite** es una plataforma web ligera para **desplegar y gestionar contenedores Docker** desde una interfaz sencilla. Está pensada para auto-hospedarse en un servidor Linux propio: el dueño la instala con un comando, invita usuarios y cada uno gestiona los contenedores que crea.
 
-Proyecto Final del Grado Superior **Desarrollo de Aplicaciones Web (DAW)** — IES Comercio, curso 2025/2026.
+🚀 **Demo en vivo**: [demo.docklite.es](https://demo.docklite.es) — entra con el botón *Probar demo* (solo lectura).
 
 ---
 
@@ -259,12 +259,7 @@ chmod +x install.sh
 
 ## 🧑‍💻 Autor
 
-**Aimar Merodo**
-
-- **Proyecto:** Fin de Grado – Desarrollo de Aplicaciones Web (DAW)
-- **Centro:** IES Comercio
-- **Curso:** 2025/2026
-- **Email:** aimarmerodoa@gmail.com
+**Aimar Merodo** — aimarmerodoa@gmail.com
 
 ---
 
