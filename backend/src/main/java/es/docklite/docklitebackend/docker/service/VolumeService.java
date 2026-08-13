@@ -44,6 +44,20 @@ public class VolumeService {
                 .toList();
     }
 
+    /**
+     * Same visibility rules as {@link #list(User)} but skips the
+     * ContainerUsageIndex (an extra daemon round-trip) and the DTO mapping —
+     * for callers that only need the number, like the dashboard summary.
+     */
+    public long countVisible(User currentUser) {
+        List<InspectVolumeResponse> all = dockerClient.listVolumesCmd().exec().getVolumes();
+        if (currentUser.getRole() == Role.ADMIN) {
+            return all.size();
+        }
+        List<String> ownedNames = ownershipService.getResourceIds(currentUser.getId(), ResourceType.VOLUME);
+        return all.stream().filter(v -> ownedNames.contains(v.getName())).count();
+    }
+
     public VolumeDto create(CreateVolumeRequest req, User currentUser) {
         // Docker treats createVolume as idempotent (returns existing volume
         // if name already exists), but our ownership table enforces a unique

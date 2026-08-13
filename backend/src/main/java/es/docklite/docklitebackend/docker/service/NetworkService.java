@@ -44,6 +44,22 @@ public class NetworkService {
                 .toList();
     }
 
+    /**
+     * Same visibility rules as {@link #list(User)} but skips the
+     * ContainerUsageIndex (an extra daemon round-trip) and the DTO mapping —
+     * for callers that only need the number, like the dashboard summary.
+     */
+    public long countVisible(User currentUser) {
+        List<Network> all = dockerClient.listNetworksCmd().exec();
+        if (currentUser.getRole() == Role.ADMIN) {
+            return all.size();
+        }
+        List<String> ownedIds = ownershipService.getResourceIds(currentUser.getId(), ResourceType.NETWORK);
+        return all.stream()
+                .filter(n -> DEFAULT_NETWORKS.contains(n.getName()) || ownedIds.contains(n.getId()))
+                .count();
+    }
+
     public NetworkDto create(CreateNetworkRequest req, User currentUser) {
         CreateNetworkResponse response = dockerClient.createNetworkCmd()
                 .withName(req.name())
