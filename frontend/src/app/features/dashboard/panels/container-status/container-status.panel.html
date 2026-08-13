@@ -13,9 +13,9 @@
 </header>
 
 @if (loading()) {
-  <ul class="divide-y divide-hairline-tertiary" aria-hidden="true">
+  <ul class="min-h-56 divide-y divide-hairline-tertiary" aria-hidden="true">
     @for (i of skeletonRows; track i) {
-      <li class="flex items-center gap-3 px-5 py-2.5">
+      <li class="flex items-center gap-3 px-5 h-11">
         <div class="skeleton h-4 flex-1 max-w-40"></div>
         <div class="skeleton h-3 w-[30%]"></div>
         <div class="skeleton h-[22px] w-16 rounded-full"></div>
@@ -24,14 +24,14 @@
   </ul>
   <span class="sr-only">Cargando…</span>
 } @else if (visible().length === 0) {
-  <div class="px-5 py-8 text-center">
+  <div class="min-h-56 px-5 py-8 text-center flex flex-col justify-center">
     <p class="text-sm text-ink">Sin contenedores</p>
     <p class="mt-1 text-xs text-ink-subtle">Crea uno para verlo aquí.</p>
   </div>
 } @else {
-  <ul class="divide-y divide-hairline-tertiary">
+  <ul class="min-h-56 divide-y divide-hairline-tertiary">
     @for (c of visible(); track c.id) {
-      <li class="flex items-center gap-3 px-5 py-2.5 text-sm">
+      <li class="flex items-center gap-3 px-5 h-11 text-sm">
         <a
           [routerLink]="['/containers', shortId(c.id)]"
           class="flex-1 min-w-0 truncate text-ink hover:text-primary-hover transition-colors"

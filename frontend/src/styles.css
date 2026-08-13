@@ -123,23 +123,50 @@ body {
 
 /* Skeleton loader primitive. Compose with Tailwind sizing utilities:
    <div class="skeleton h-4 w-32"></div>. Blocks mimic the final layout so
-   pages don't shift when real data arrives. */
+   pages don't shift when real data arrives. The ::after sweep is the classic
+   shimmer — an opacity pulse is invisible on dark gray over dark bg. */
 .skeleton {
+  position: relative;
+  overflow: hidden;
   background-color: var(--color-surface-3);
   border-radius: var(--radius-xs);
-  animation: var(--animate-pulse);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-ink) 10%, transparent) 50%,
+    transparent
+  );
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
 }
 
 /* Reduced motion: intentional alternatives, not a blanket kill. Spinners keep
-   communicating "loading" (slower); the pulse becomes a static dimmed state. */
+   communicating "loading" (slower); pulses and the skeleton shimmer become
+   static states. */
 @media (prefers-reduced-motion: reduce) {
   .animate-spin {
     animation-duration: 2.5s;
   }
 
-  .animate-pulse,
-  .skeleton {
+  .animate-pulse {
     animation: none;
     opacity: 0.65;
+  }
+
+  .skeleton::after {
+    animation: none;
+    content: none;
   }
 }
