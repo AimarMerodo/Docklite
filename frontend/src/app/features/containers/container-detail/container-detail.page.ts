@@ -67,6 +67,18 @@ export class ContainerDetailPage implements OnInit, OnDestroy {
   ];
 
   protected readonly tab = signal<Tab>('general');
+
+  protected selectTab(id: Tab, event: Event): void {
+    this.tab.set(id);
+    // Keep the tapped tab fully visible in the scrollable strip on mobile.
+    (event.currentTarget as HTMLElement).scrollIntoView({
+      behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+  }
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly container = signal<ContainerDetail | null>(null);
