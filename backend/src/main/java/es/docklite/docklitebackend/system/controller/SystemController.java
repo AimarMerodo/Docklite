@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 @RestController
 @RequestMapping("/api/v1/system")
@@ -43,16 +45,38 @@ public class SystemController {
     public DashboardSummaryDto dashboard(Authentication auth) {
         User user = (User) auth.getPrincipal();
 
-        List<ContainerDto> containers = containerService.list(user, true);
-        long running = containers.stream().filter(c -> "running".equals(c.state())).count();
+        // The four listings are independent daemon round-trips. On a busy
+        // host each takes hundreds of ms, so running them sequentially made
+        // this endpoint cost their SUM (~1.2s on the demo VPS); concurrent,
+        // it costs only the slowest one.
+        CompletableFuture<List<ContainerDto>> containersFuture =
+                CompletableFuture.supplyAsync(() -> containerService.list(user, true));
+        CompletableFuture<Integer> imageCount =
+                CompletableFuture.supplyAsync(() -> imageService.list(user).size());
+        CompletableFuture<Integer> networkCount =
+                CompletableFuture.supplyAsync(() -> networkService.list(user).size());
+        CompletableFuture<Integer> volumeCount =
+                CompletableFuture.supplyAsync(() -> volumeService.list(user).size());
 
-        return new DashboardSummaryDto(
-                containers.size(),
-                running,
-                containers.size() - running,
-                imageService.list(user).size(),
-                networkService.list(user).size(),
-                volumeService.list(user).size()
-        );
+        try {
+            List<ContainerDto> containers = containersFuture.join();
+            long running = containers.stream().filter(c -> "running".equals(c.state())).count();
+
+            return new DashboardSummaryDto(
+                    containers.size(),
+                    running,
+                    containers.size() - running,
+                    imageCount.join(),
+                    networkCount.join(),
+                    volumeCount.join()
+            );
+        } catch (CompletionException e) {
+            // join() wraps failures; rethrow the original exception so the
+            // global handler keeps mapping Docker errors as before.
+            if (e.getCause() instanceof RuntimeException cause) {
+                throw cause;
+            }
+            throw e;
+        }
     }
 }
