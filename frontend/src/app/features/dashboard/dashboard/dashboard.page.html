@@ -1,9 +1,9 @@
-<section class="mx-auto px-6 md:px-8 py-8 max-w-[1440px]">
-  <header class="mb-8">
-    <h1 class="text-[40px] leading-[1.15] font-semibold tracking-[-1px]">
+<section class="mx-auto px-6 md:px-8 py-6 md:py-8 max-w-[1440px]">
+  <header class="mb-6 md:mb-8">
+    <h1 class="text-[28px] md:text-[40px] leading-[1.15] font-semibold tracking-[-1px]">
       Hola, {{ auth.username() }}
     </h1>
-    <p class="mt-2 text-base text-ink-subtle">
+    <p class="mt-2 text-sm md:text-base text-ink-subtle">
       Estado actual de tus contenedores Docker en este host.
     </p>
   </header>
@@ -17,21 +17,25 @@
     </div>
   }
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+  <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-5">
     @for (card of cards(); track card.label) {
       <a
         [routerLink]="card.link"
-        class="flex flex-col h-full min-h-36 rounded-lg border border-hairline bg-surface-1 hover:bg-surface-2 hover:border-hairline-strong transition-colors p-6"
+        class="flex flex-col h-full min-h-24 md:min-h-36 rounded-lg border border-hairline bg-surface-1 hover:bg-surface-2 hover:border-hairline-strong transition-colors p-4 md:p-6"
       >
-        <p class="text-[13px] font-medium tracking-[0.4px] uppercase text-ink-tertiary">
+        <p
+          class="text-[11px] md:text-[13px] font-medium tracking-[0.4px] uppercase text-ink-tertiary"
+        >
           {{ card.label }}
         </p>
         <p
-          class="mt-auto text-[40px] leading-none font-semibold tracking-[-1px] tabular-nums"
+          class="mt-auto text-[28px] md:text-[40px] leading-none font-semibold tracking-[-1px] tabular-nums"
         >
           {{ card.value }}
         </p>
-        <p class="mt-2 min-h-[16px] text-xs text-ink-subtle">{{ card.hint }}</p>
+        <p class="hidden md:block mt-2 min-h-[16px] text-xs text-ink-subtle">
+          {{ card.hint }}
+        </p>
       </a>
     }
   </div>

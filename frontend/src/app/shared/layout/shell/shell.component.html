@@ -20,6 +20,26 @@
       aria-label="Navegación"
     >
       <app-sidebar class="flex h-full" (navigated)="mobileNavOpen.set(false)" />
+      <!-- Sits over the right end of the sidebar's h-14 logo header. -->
+      <button
+        type="button"
+        class="absolute top-2 right-2 inline-flex items-center justify-center w-10 h-10 rounded-md text-ink-muted hover:text-ink hover:bg-surface-2 transition-colors"
+        aria-label="Cerrar navegación"
+        (click)="mobileNavOpen.set(false)"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
     </div>
   </div>
 }

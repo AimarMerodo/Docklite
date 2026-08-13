@@ -5,13 +5,14 @@ import { InvitationDto, InvitationService } from '@core/api/invitation.service';
 import { AuthService } from '@core/auth/auth.service';
 import { ApiError } from '@core/http/error.interceptor';
 import { ConfirmService } from '@core/ui/confirm.service';
+import { PageHeaderComponent } from '@shared/ui/page-header/page-header.component';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
 @Component({
   selector: 'app-admin-invitations-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PageHeaderComponent],
   templateUrl: './invitations.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

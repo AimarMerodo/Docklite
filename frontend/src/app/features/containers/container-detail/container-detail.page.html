@@ -15,7 +15,7 @@
   } @else if (container(); as c) {
     <header class="mb-6">
       <div class="flex items-center justify-between mb-4">
-        <nav class="flex items-center gap-1.5 text-xs text-ink-tertiary font-mono">
+        <nav class="flex items-center gap-1.5 min-w-0 text-xs text-ink-tertiary font-mono">
           <a routerLink="/containers" class="hover:text-ink transition-colors">
             containers
           </a>
@@ -42,7 +42,9 @@
         </a>
       </div>
 
-      <div class="flex items-center justify-between gap-4">
+      <div
+        class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+      >
         <div class="flex items-center gap-4 min-w-0">
           <div class="flex flex-col gap-1 min-w-0">
             <div class="flex items-center gap-3 min-w-0">
@@ -107,7 +109,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center flex-wrap gap-2 lg:shrink-0">
           @if (!c.state.running) {
             <button
               type="button"
@@ -154,7 +156,10 @@
               Detener
             </button>
           }
-          <span class="w-px h-6 bg-hairline mx-1" aria-hidden="true"></span>
+          <span
+            class="hidden sm:block w-px h-6 bg-hairline mx-1"
+            aria-hidden="true"
+          ></span>
           <button
             type="button"
             class="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-transparent border border-danger/50 hover:bg-danger/10 text-danger text-sm font-medium transition-colors disabled:opacity-50"
