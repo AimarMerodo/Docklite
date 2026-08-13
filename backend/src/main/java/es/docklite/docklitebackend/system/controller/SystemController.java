@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/api/v1/system")
@@ -30,6 +32,11 @@ public class SystemController {
     private final ImageService imageService;
     private final NetworkService networkService;
     private final VolumeService volumeService;
+
+    // Virtual threads: the summary fan-out is blocking IO, and the default
+    // ForkJoinPool sizes itself to the host's core count, which is exactly
+    // what we don't want to depend on.
+    private final ExecutorService summaryExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     @GetMapping("/info")
     public Info info() {
@@ -47,16 +54,17 @@ public class SystemController {
 
         // The four listings are independent daemon round-trips. On a busy
         // host each takes hundreds of ms, so running them sequentially made
-        // this endpoint cost their SUM (~1.2s on the demo VPS); concurrent,
-        // it costs only the slowest one.
+        // this endpoint cost their SUM (~1.2s on the demo VPS); concurrent
+        // and using the count-only service paths, it costs roughly the
+        // slowest single daemon call.
         CompletableFuture<List<ContainerDto>> containersFuture =
-                CompletableFuture.supplyAsync(() -> containerService.list(user, true));
-        CompletableFuture<Integer> imageCount =
-                CompletableFuture.supplyAsync(() -> imageService.list(user).size());
-        CompletableFuture<Integer> networkCount =
-                CompletableFuture.supplyAsync(() -> networkService.list(user).size());
-        CompletableFuture<Integer> volumeCount =
-                CompletableFuture.supplyAsync(() -> volumeService.list(user).size());
+                CompletableFuture.supplyAsync(() -> containerService.list(user, true), summaryExecutor);
+        CompletableFuture<Long> imageCount =
+                CompletableFuture.supplyAsync(() -> imageService.countVisible(user), summaryExecutor);
+        CompletableFuture<Long> networkCount =
+                CompletableFuture.supplyAsync(() -> networkService.countVisible(user), summaryExecutor);
+        CompletableFuture<Long> volumeCount =
+                CompletableFuture.supplyAsync(() -> volumeService.countVisible(user), summaryExecutor);
 
         try {
             List<ContainerDto> containers = containersFuture.join();

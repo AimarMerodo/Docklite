@@ -66,6 +66,22 @@ public class ImageService {
                 .toList();
     }
 
+    /**
+     * Same visibility rules as {@link #list(User)} but skips the
+     * ContainerUsageIndex (an extra daemon round-trip), the owners lookup and
+     * the DTO mapping — for callers that only need the number, like the
+     * dashboard summary. Listing images is the slowest daemon call on busy
+     * hosts, so trimming it matters most here.
+     */
+    public long countVisible(User currentUser) {
+        List<Image> all = dockerClient.listImagesCmd().exec();
+        if (currentUser.getRole() == Role.ADMIN) {
+            return all.size();
+        }
+        List<String> ownedIds = ownershipService.getResourceIds(currentUser.getId(), ResourceType.IMAGE);
+        return all.stream().filter(img -> ownedIds.contains(img.getId())).count();
+    }
+
     public ImageDto pull(PullImageRequest req, User currentUser) {
         try {
             dockerClient.pullImageCmd(req.image())
