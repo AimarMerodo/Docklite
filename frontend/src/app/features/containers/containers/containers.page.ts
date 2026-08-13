@@ -44,6 +44,8 @@ const FILTERABLE_STATES: StatusOption[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContainersPage implements OnInit {
+  protected readonly skeletonRows = [0, 1, 2, 3, 4];
+
   private readonly api = inject(ContainerService);
   private readonly auth = inject(AuthService);
 

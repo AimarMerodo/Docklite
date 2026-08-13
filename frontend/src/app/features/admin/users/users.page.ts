@@ -14,6 +14,8 @@ import { PageHeaderComponent } from '@shared/ui/page-header/page-header.componen
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminUsersPage implements OnInit {
+  protected readonly skeletonRows = [0, 1, 2, 3, 4];
+
   private readonly api = inject(UserService);
   private readonly auth = inject(AuthService);
   private readonly confirm = inject(ConfirmService);

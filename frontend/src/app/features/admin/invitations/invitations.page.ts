@@ -17,6 +17,8 @@ type StatusFilter = 'all' | 'active' | 'inactive';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminInvitationsPage implements OnInit {
+  protected readonly skeletonRows = [0, 1, 2, 3, 4];
+
   private readonly api = inject(InvitationService);
   private readonly confirm = inject(ConfirmService);
   private readonly auth = inject(AuthService);

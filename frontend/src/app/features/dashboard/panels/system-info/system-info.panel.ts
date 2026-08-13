@@ -18,6 +18,8 @@ export class SystemInfoPanel {
   readonly info = input<SystemInfoDto | null>(null);
   readonly loading = input(false);
 
+  protected readonly skeletonRows = [0, 1, 2, 3];
+
   readonly rows = computed<InfoRow[]>(() => {
     const i = this.info();
     if (!i) return [];

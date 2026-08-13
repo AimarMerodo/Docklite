@@ -5,7 +5,16 @@
 </header>
 
 @if (loading()) {
-  <div class="px-5 py-6 text-sm text-ink-subtle">Cargando…</div>
+  <ul class="divide-y divide-hairline-tertiary" aria-hidden="true">
+    @for (i of skeletonRows; track i) {
+      <li class="flex items-center gap-3 px-5 py-2.5">
+        <div class="skeleton h-[22px] w-20 rounded-full"></div>
+        <div class="skeleton h-3 w-24"></div>
+        <div class="skeleton ml-auto h-3 w-14"></div>
+      </li>
+    }
+  </ul>
+  <span class="sr-only">Cargando…</span>
 } @else if (entries().length === 0) {
   <div class="px-5 py-8 text-center">
     <p class="text-sm text-ink">Sin actividad todavía</p>

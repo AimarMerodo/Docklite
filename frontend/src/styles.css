@@ -121,6 +121,15 @@ body {
   height: 0 !important;
 }
 
+/* Skeleton loader primitive. Compose with Tailwind sizing utilities:
+   <div class="skeleton h-4 w-32"></div>. Blocks mimic the final layout so
+   pages don't shift when real data arrives. */
+.skeleton {
+  background-color: var(--color-surface-3);
+  border-radius: var(--radius-xs);
+  animation: var(--animate-pulse);
+}
+
 /* Reduced motion: intentional alternatives, not a blanket kill. Spinners keep
    communicating "loading" (slower); the pulse becomes a static dimmed state. */
 @media (prefers-reduced-motion: reduce) {
@@ -128,7 +137,8 @@ body {
     animation-duration: 2.5s;
   }
 
-  .animate-pulse {
+  .animate-pulse,
+  .skeleton {
     animation: none;
     opacity: 0.65;
   }
